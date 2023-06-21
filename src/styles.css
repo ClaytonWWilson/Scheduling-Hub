@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /**
+  :root {
+    color: #0f0f0f;
+    background-color: #f6f6f6;
+  }
+  **/
+  :root {
+    --bg-primary: 248, 243, 252;
+    --bg-secondary: 237, 231, 241;
+    --bg-primary-button: 222, 18, 32;
+    --bg-secondary-button: 253, 226, 234;
+    --bg-accent: 202, 43, 83;
+
+    --text-primary: 8, 3, 12;
+    --text-secondary: 255, 255, 255;
+  }
+
+  .dark {
+    --bg-primary: 47, 47, 47;
+    --bg-secondary: 245, 246, 247;
+    --bg-tertiary: 238, 238, 238;
+
+    --text-primary: 0, 0, 0;
+    --text-secondary: 56, 63, 74;
+    --text-tertiary: 255, 255, 255;
+  }
+}
+
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+}
