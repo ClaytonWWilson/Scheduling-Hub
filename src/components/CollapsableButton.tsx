@@ -17,7 +17,7 @@ const CollapsableButton = (props: CollapsableButtonProps) => {
   return (
     <div
       className={`flex text-center h-10 min-h-[2.5rem] overflow-clip text-clip rounded-lg cursor-pointer transition-all duration-[25] ${
-        props.selected && "bg-secondarybutton"
+        props.selected && "bg-highlight"
       }${props.className ? " " + props.className : ""}`}
       onClick={props.onClick}
     >

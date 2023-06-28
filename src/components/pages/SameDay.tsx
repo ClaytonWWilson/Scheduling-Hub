@@ -27,7 +27,7 @@ const SameDay = (props: SameDayProps) => {
 
   return (
     <div
-      className={`border-2 border-solid border-green-500 h-full w-full px-2 py-2 flex flex-col gap-y-1 ${
+      className={`border-2 border-solid border-green-500 h-full w-full px-2 py-2 flex flex-col gap-y-2 ${
         !props.visible ? "hidden" : ""
       }`}
     >
@@ -36,6 +36,8 @@ const SameDay = (props: SameDayProps) => {
         value={data.stationCode}
         onChange={(e) => setData({ ...data, stationCode: e.target.value })}
         error={data.stationCode === ""}
+        autoComplete="aaaaa"
+        aria-autocomplete="none"
         className="w-96"
       ></TextField>
       {/* <Autocomplete
@@ -49,6 +51,7 @@ const SameDay = (props: SameDayProps) => {
       <RadioGroup
         value={data.routingType}
         onChange={(e) => setData({ ...data, routingType: e.target.value })}
+        className="w-fit"
       >
         <FormControlLabel
           value="sunrise"
@@ -69,6 +72,8 @@ const SameDay = (props: SameDayProps) => {
         value={data.percent}
         onChange={(e) => setData({ ...data, percent: e.target.value })}
         error={data.percent === ""}
+        autoComplete="aaaaa"
+        aria-autocomplete="none"
         className="w-96"
         InputProps={{
           endAdornment: <InputAdornment position="end">%</InputAdornment>,
@@ -79,6 +84,8 @@ const SameDay = (props: SameDayProps) => {
         value={data.dpoLink}
         onChange={(e) => setData({ ...data, dpoLink: e.target.value })}
         error={data.dpoLink === ""}
+        autoComplete="aaaaa"
+        aria-autocomplete="none"
         className="w-96"
       ></TextField>
       <TextField
@@ -86,6 +93,8 @@ const SameDay = (props: SameDayProps) => {
         value={data.tbaCount}
         onChange={(e) => setData({ ...data, tbaCount: e.target.value })}
         error={data.tbaCount === ""}
+        autoComplete="aaaaa"
+        aria-autocomplete="none"
         className="w-96"
       ></TextField>
       <TextField
@@ -93,14 +102,17 @@ const SameDay = (props: SameDayProps) => {
         value={data.routeCount}
         onChange={(e) => setData({ ...data, routeCount: e.target.value })}
         error={data.routeCount === ""}
+        autoComplete="aaaaa"
+        aria-autocomplete="none"
         className="w-96"
       ></TextField>
       <Typography>
-        {data.routeCount && data.percent
-          ? Math.ceil(
-              parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
-            )
-          : ""}
+        {"Total routes: " +
+          (data.routeCount && data.percent
+            ? Math.ceil(
+                parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
+              )
+            : "???")}
       </Typography>
 
       <div className="w-96">
@@ -178,3 +190,5 @@ export default SameDay;
 // FEATURE: Copy DPO link
 // FEATURE: Toast shown for every copy
 // FEATURE: Input validation on every textfield
+
+// FEATURE: Drop submitted files to easily copy tbas and check # of tbas

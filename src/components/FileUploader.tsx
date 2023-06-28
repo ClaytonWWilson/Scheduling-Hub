@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 
+// import "./FileUploader.css";
+
 type FileUploaderProps = {
   onAccepted: (files: FileList) => void;
 };
@@ -15,8 +17,8 @@ const FileUploader = (props: FileUploaderProps) => {
   return (
     <div
       id="drop-area"
-      className={`border-2 border-dashed rounded-2xl w-96 font-sans mx-24 my-auto p-5 ${
-        highlighted ? "border-gray-900" : "border-purple-600"
+      className={`border-2 border-dashed rounded-2xl w-96 font-sans mx-24 my-auto p-5 cursor-pointer h-36 flex justify-center items-center ${
+        highlighted ? "border-secondary" : "border-accent"
       }`}
       onDragEnter={(e) => {
         preventDefaults(e);
@@ -36,9 +38,12 @@ const FileUploader = (props: FileUploaderProps) => {
         const files = e.dataTransfer.files;
         props.onAccepted(files);
       }}
+      onClick={() => {
+        document.getElementById("file-el")?.click();
+      }}
     >
-      <form className="my-form mb-3">
-        <p className="mt-0">Drop file here</p>
+      <form className="my-form m-auto">
+        <span className="">Drop documentSearch.csv here</span>
         <input
           className="hidden"
           type="file"
@@ -51,12 +56,12 @@ const FileUploader = (props: FileUploaderProps) => {
             }
           }}
         ></input>
-        <label
+        {/* <label
           className="button inline-block p-2 bg-purple-500 cursor-pointer rounded-md border-2 border-solid border-purple-500 hover:bg-gray-400"
           htmlFor="file-el"
         >
           Select some files
-        </label>
+        </label> */}
       </form>
     </div>
   );

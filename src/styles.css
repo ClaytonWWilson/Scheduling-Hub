@@ -3,34 +3,65 @@
 @tailwind utilities;
 
 @layer base {
-  /**
-  :root {
-    color: #0f0f0f;
-    background-color: #f6f6f6;
+  .lightred {
+    --bg-primary: var(--lightred-bg);
+    --bg-main: var(--red-primarymain);
+    --bg-light: var(--red-primarylight);
+    --bg-dark: var(--red-primarydark);
+    --bg-accent: var(--red-secondarymain);
+    --bg-highlight: var(--bg-light);
+
+    --text-main: var(--lightred-text);
+    --text-primary: var(--red-textprimary);
+    --text-secondary: var(--red-textsecondary);
+
+    --border-primary: var(--red-primarymain);
+    --border-secondary: var(--red-primarylight);
+    --border-accent: var(--red-secondarymain);
+
+    --shadow-primary: 107, 114, 128;
   }
-  **/
-  :root {
-    --bg-primary: 248, 243, 252;
-    --bg-secondary: 237, 231, 241;
-    --bg-primary-button: 222, 18, 32;
-    --bg-secondary-button: 253, 226, 234;
-    --bg-accent: 202, 43, 83;
 
-    --text-primary: 8, 3, 12;
-    --text-secondary: 255, 255, 255;
-  }
+  .darkred {
+    --bg-primary: var(--darkred-bg);
+    --bg-main: var(--red-primarymain);
+    --bg-light: var(--red-primarylight);
+    --bg-dark: var(--red-primarydark);
+    --bg-accent: var(--red-secondarymain);
+    --bg-highlight: var(--red-primarymain);
 
-  .dark {
-    --bg-primary: 47, 47, 47;
-    --bg-secondary: 245, 246, 247;
-    --bg-tertiary: 238, 238, 238;
+    --text-main: var(--darkred-text);
+    --text-primary: var(--red-textprimary);
+    --text-secondary: var(--red-textsecondary);
 
-    --text-primary: 0, 0, 0;
-    --text-secondary: 56, 63, 74;
-    --text-tertiary: 255, 255, 255;
+    --border-primary: var(--red-primarymain);
+    --border-secondary: var(--red-primarylight);
+    --border-accent: var(--red-secondarymain);
+
+    --shadow-primary: 0, 0, 0;
   }
 }
 
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Theme color declarations */
+
+  /* Red */
+  --red-primarymain: 239, 108, 107;
+  --red-primarylight: 255, 203, 208;
+  --red-primarydark: 252, 50, 39;
+  --red-secondarymain: 245, 0, 87;
+  --red-secondarylight: 247, 51, 120;
+  --red-secondarydark: 171, 0, 60;
+  --red-textprimary: 0, 0, 0, 0.87;
+  --red-textsecondary: 255, 255, 255;
+
+  /* -Light */
+  --lightred-bg: 248, 243, 252;
+  --lightred-text: 0, 0, 0, 0.87;
+
+  /* -Dark */
+  --darkred-bg: 55, 55, 55;
+  --darkred-text: 255, 255, 255;
 }

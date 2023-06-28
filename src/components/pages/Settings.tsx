@@ -1,49 +1,39 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import React, { useState } from "react";
+import { AppSettings, Themes } from "../../types/Settings";
 
 type SettingsProps = {
   visible: boolean;
+  settings: AppSettings;
+  onSettingsChanged: (settings: AppSettings) => void;
 };
-
-type SettingsState = {
-  theme: Themes;
-};
-
-enum Themes {
-  light,
-  dark,
-}
 
 const Settings = (props: SettingsProps) => {
-  const [settings, setSettings] = useState<SettingsState>({
-    theme: Themes.light,
-  });
+  const [settings, setSettings] = useState(props.settings);
+
   return (
     <div
       className={`border-2 border-solid border-green-500 h-full w-full px-2 py-2 flex flex-col ${
         !props.visible ? "hidden" : ""
       }`}
     >
-      <FormControl fullWidth>
-        <InputLabel id="demo-simple-select-label">Age</InputLabel>
+      <FormControl className="w-32">
+        <InputLabel>Theme</InputLabel>
         <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
           value={settings.theme}
-          label="Age"
+          label="Theme"
           onChange={(e) => {
-            const chosenTheme = e.target.value;
-            if (chosenTheme! in Themes || typeof chosenTheme === "string") {
-              return;
-            }
+            const chosenTheme = e.target.value as Themes;
 
             setSettings((prevSettings) => {
-              return { ...prevSettings, theme: chosenTheme };
+              const newSettings = { ...prevSettings, theme: chosenTheme };
+              props.onSettingsChanged(newSettings);
+              return newSettings;
             });
           }}
         >
-          <MenuItem value={Themes.dark}>Dark</MenuItem>
-          <MenuItem value={Themes.light}>Light</MenuItem>
+          <MenuItem value={Themes.darkred}>Dark Red</MenuItem>
+          <MenuItem value={Themes.lightred}>Light Red</MenuItem>
         </Select>
       </FormControl>
     </div>

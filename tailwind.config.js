@@ -8,18 +8,28 @@ const generateColorClass = (variable) => {
 };
 
 const textColor = {
+  main: generateColorClass("text-main"),
   primary: generateColorClass("text-primary"),
   secondary: generateColorClass("text-secondary"),
-  // tertiary: generateColorClass("text-tertiary"),
 };
 
 const backgroundColor = {
   primary: generateColorClass("bg-primary"),
-  secondary: generateColorClass("bg-secondary"),
-  // tertiary: generateColorClass("bg-tertiary"),
-  primarybutton: generateColorClass("bg-primary-button"),
-  secondarybutton: generateColorClass("bg-secondary-button"),
+  main: generateColorClass("bg-main"),
+  light: generateColorClass("bg-light"),
+  dark: generateColorClass("bg-dark"),
   accent: generateColorClass("bg-accent"),
+  highlight: generateColorClass("bg-highlight"),
+};
+
+const borderColor = {
+  primary: generateColorClass("border-primary"),
+  secondary: generateColorClass("border-secondary"),
+  accent: generateColorClass("border-accent"),
+};
+
+const boxShadowColor = {
+  primary: generateColorClass("shadow-primary"),
 };
 
 export default {
@@ -35,6 +45,8 @@ export default {
     extend: {
       textColor,
       backgroundColor,
+      borderColor,
+      boxShadowColor,
     },
   },
   plugins: [],

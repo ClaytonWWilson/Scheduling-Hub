@@ -15,7 +15,7 @@ type SidebarProps = {
 
 const Sidebar = (props: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selected, setSelected] = useState("dcap");
+  const [selected, setSelected] = useState(props.defaultSelected);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => !prev);
@@ -27,7 +27,7 @@ const Sidebar = (props: SidebarProps) => {
         collapsed ? "w-12 min-w-[3rem]" : "w-48 min-w-[12rem]"
       }`}
     >
-      <div className="shadow-lg shadow-gray-400 rounded-lg h-full w-full flex flex-col transition-all">
+      <div className="shadow-lg shadow-primary rounded-lg h-full w-full flex flex-col transition-all">
         <div onClick={toggleCollapsed}></div>
         <CollapsableButton
           icon={AccessAlarmIcon}
