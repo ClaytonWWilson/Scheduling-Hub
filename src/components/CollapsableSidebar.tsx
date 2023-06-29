@@ -24,7 +24,7 @@ const Sidebar = (props: SidebarProps) => {
 
   return (
     <div
-      className={`h-[97vh] min-h-[22rem] max-h-[33rem] float-left px-1 fixed transition-all ${
+      className={`h-[calc(100vh-.75rem)] min-h-[22rem] max-h-[33rem] float-left px-1 fixed transition-all ${
         collapsed ? "w-12 min-w-[3rem]" : "w-48 min-w-[12rem]"
       }`}
     >
@@ -101,5 +101,3 @@ const Sidebar = (props: SidebarProps) => {
 };
 
 export default Sidebar;
-
-// BUG: Bottom of sidebar does not resize consistently with window
