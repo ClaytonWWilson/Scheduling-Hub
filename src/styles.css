@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .border-green {
+    @apply border-2;
+    @apply border-solid;
+    @apply border-green-500;
+  }
+}
+
 @layer base {
   .lightred {
     --bg-primary: var(--lightred-bg);
@@ -64,4 +72,9 @@
   /* -Dark */
   --darkred-bg: 55, 55, 55;
   --darkred-text: 255, 255, 255;
+}
+
+/* Removes the scrollbar from Material UI Timepicker */
+ul::-webkit-scrollbar {
+  display: none;
 }

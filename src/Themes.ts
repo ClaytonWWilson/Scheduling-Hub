@@ -39,6 +39,9 @@ const muiDarkRedTheme: ThemeOptions = {
     error: {
       main: "#f93636",
     },
+    success: {
+      main: "#6bef6b",
+    },
     text: {
       secondary: "#ffffff",
       disabled: "#ffffff",
