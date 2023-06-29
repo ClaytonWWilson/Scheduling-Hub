@@ -8,6 +8,12 @@
     @apply border-solid;
     @apply border-green-500;
   }
+
+  .border-blue {
+    @apply border-2;
+    @apply border-solid;
+    @apply border-blue-500;
+  }
 }
 
 @layer base {
