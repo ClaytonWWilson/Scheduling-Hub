@@ -7,6 +7,7 @@ import WidgetsIcon from "@mui/icons-material/Widgets";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import RouteIcon from "@mui/icons-material/Route";
+import { Paper } from "@mui/material";
 
 type SidebarProps = {
   defaultSelected: string;
@@ -28,7 +29,7 @@ const Sidebar = (props: SidebarProps) => {
         collapsed ? "w-12 min-w-[3rem]" : "w-48 min-w-[12rem]"
       }`}
     >
-      <div className="h-full w-full flex flex-col mt-2 shadow-md shadow-primary rounded-lg transition-all">
+      <Paper className="h-full w-full flex flex-col mt-4 shadow-md rounded-lg transition-all">
         <div onClick={toggleCollapsed}></div>
         <CollapsableButton
           icon={AccessAlarmIcon}
@@ -95,7 +96,7 @@ const Sidebar = (props: SidebarProps) => {
           selected={selected === "settings"}
           className="mt-auto"
         />
-      </div>
+      </Paper>
     </div>
   );
 };

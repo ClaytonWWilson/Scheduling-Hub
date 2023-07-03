@@ -3,17 +3,21 @@ import {
   Autocomplete,
   Button,
   FormControlLabel,
+  IconButton,
   InputAdornment,
   MenuItem,
+  Paper,
   Radio,
   RadioGroup,
   TextField,
   Typography,
 } from "@mui/material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { isNumeric } from "../../Utilities";
 
 type SameDayProps = {
-  visible: boolean;
+  onClose: (taskId: number) => void;
+  taskId: number;
 };
 
 const SameDay = (props: SameDayProps) => {
@@ -65,11 +69,19 @@ const SameDay = (props: SameDayProps) => {
   };
 
   return (
-    <div
-      className={`border-green h-fit w-fit px-2 py-2 flex flex-col gap-y-2 ${
-        !props.visible ? "hidden" : ""
-      }`}
-    >
+    <Paper className={"h-fit w-fit px-2 py-2 flex flex-col gap-y-2 relative"}>
+      <div className="absolute w-fit right-[-20px] top-[-20px] z-[9]">
+        <IconButton
+          aria-label="delete"
+          onClick={() => {
+            props.onClose(props.taskId);
+          }}
+        >
+          <CancelIcon />
+        </IconButton>
+      </div>
+
+      <Typography align="center">Same Day</Typography>
       <TextField
         label="Station Code"
         value={data.stationCode}
@@ -79,7 +91,7 @@ const SameDay = (props: SameDayProps) => {
           setErrors((prev) => {
             let error = "";
 
-            if (code.match(/[A-Z]{3}[1-9]{1}/) === null) {
+            if (code.match(/^[A-Z]{3}[1-9]{1}$/) === null) {
               error = "Station Code is invalid.";
             }
 
@@ -129,7 +141,7 @@ const SameDay = (props: SameDayProps) => {
       <RadioGroup
         value={data.routingType}
         onChange={(e) => setData({ ...data, routingType: e.target.value })}
-        className="w-fit"
+        className="w-fit ml-2"
       >
         <FormControlLabel
           value="sunrise"
@@ -238,98 +250,100 @@ const SameDay = (props: SameDayProps) => {
         aria-autocomplete="none"
         className="w-96"
       ></TextField>
-      <TextField
-        label="TBAs routed"
-        value={data.tbaCount}
-        onChange={(e) => {
-          let numOfTBAs = e.target.value;
+      <div>
+        <TextField
+          label="TBAs routed"
+          value={data.tbaCount}
+          onChange={(e) => {
+            let numOfTBAs = e.target.value;
 
-          setErrors((prev) => {
-            let error = "";
+            setErrors((prev) => {
+              let error = "";
 
-            if (!isNumeric(numOfTBAs)) {
-              error = "TBAs routed must be a number.";
-            } else if (parseInt(numOfTBAs) < 0) {
-              error = "TBAs routed cannot be negative.";
+              if (!isNumeric(numOfTBAs)) {
+                error = "TBAs routed must be a number.";
+              } else if (parseInt(numOfTBAs) < 0) {
+                error = "TBAs routed cannot be negative.";
+              }
+
+              return { ...prev, tbaCount: error };
+            });
+
+            setData((prev) => {
+              return { ...prev, tbaCount: numOfTBAs };
+            });
+          }}
+          color={(() => {
+            if (focused.tbaCount && data.tbaCount.length === 0) {
+              return "primary";
+            } else if (errors.tbaCount) {
+              return "error";
+            } else {
+              return "success";
             }
-
-            return { ...prev, tbaCount: error };
-          });
-
-          setData((prev) => {
-            return { ...prev, tbaCount: numOfTBAs };
-          });
-        }}
-        color={(() => {
-          if (focused.tbaCount && data.tbaCount.length === 0) {
-            return "primary";
-          } else if (errors.tbaCount) {
-            return "error";
-          } else {
-            return "success";
+          })()}
+          focused={focused.tbaCount || data.tbaCount.length != 0}
+          onFocus={() =>
+            setFocused((prev) => {
+              return { ...prev, tbaCount: true };
+            })
           }
-        })()}
-        focused={focused.tbaCount || data.tbaCount.length != 0}
-        onFocus={() =>
-          setFocused((prev) => {
-            return { ...prev, tbaCount: true };
-          })
-        }
-        onBlur={() => {
-          setFocused((prev) => {
-            return { ...prev, tbaCount: false };
-          });
-        }}
-        autoComplete="aaaaa"
-        aria-autocomplete="none"
-        className="w-96"
-      ></TextField>
-      <TextField
-        label="# of generated routes"
-        value={data.routeCount}
-        onChange={(e) => {
-          let NumOfRoutes = e.target.value;
+          onBlur={() => {
+            setFocused((prev) => {
+              return { ...prev, tbaCount: false };
+            });
+          }}
+          autoComplete="aaaaa"
+          aria-autocomplete="none"
+          className="w-48"
+        ></TextField>
+        <TextField
+          label="# of generated routes"
+          value={data.routeCount}
+          onChange={(e) => {
+            let NumOfRoutes = e.target.value;
 
-          setErrors((prev) => {
-            let error = "";
+            setErrors((prev) => {
+              let error = "";
 
-            if (!isNumeric(NumOfRoutes)) {
-              error = "Number of routes must be a number.";
-            } else if (parseInt(NumOfRoutes) < 0) {
-              error = "Number of routes cannot be negative.";
+              if (!isNumeric(NumOfRoutes)) {
+                error = "Number of routes must be a number.";
+              } else if (parseInt(NumOfRoutes) < 0) {
+                error = "Number of routes cannot be negative.";
+              }
+
+              return { ...prev, routeCount: error };
+            });
+
+            setData((prev) => {
+              return { ...prev, routeCount: NumOfRoutes };
+            });
+          }}
+          color={(() => {
+            if (focused.routeCount && data.routeCount.length === 0) {
+              return "primary";
+            } else if (errors.routeCount) {
+              return "error";
+            } else {
+              return "success";
             }
-
-            return { ...prev, routeCount: error };
-          });
-
-          setData((prev) => {
-            return { ...prev, routeCount: NumOfRoutes };
-          });
-        }}
-        color={(() => {
-          if (focused.routeCount && data.routeCount.length === 0) {
-            return "primary";
-          } else if (errors.routeCount) {
-            return "error";
-          } else {
-            return "success";
+          })()}
+          focused={focused.routeCount || data.routeCount.length != 0}
+          onFocus={() =>
+            setFocused((prev) => {
+              return { ...prev, routeCount: true };
+            })
           }
-        })()}
-        focused={focused.routeCount || data.routeCount.length != 0}
-        onFocus={() =>
-          setFocused((prev) => {
-            return { ...prev, routeCount: true };
-          })
-        }
-        onBlur={() => {
-          setFocused((prev) => {
-            return { ...prev, routeCount: false };
-          });
-        }}
-        autoComplete="aaaaa"
-        aria-autocomplete="none"
-        className="w-96"
-      ></TextField>
+          onBlur={() => {
+            setFocused((prev) => {
+              return { ...prev, routeCount: false };
+            });
+          }}
+          autoComplete="aaaaa"
+          aria-autocomplete="none"
+          className="w-48"
+        ></TextField>
+      </div>
       <Typography>
         {"Total routes: " +
           (isNumeric(data.routeCount) && isNumeric(data.percent)
@@ -402,7 +416,7 @@ const SameDay = (props: SameDayProps) => {
           Clear
         </Button>
       </div>
-    </div>
+    </Paper>
   );
 };
 

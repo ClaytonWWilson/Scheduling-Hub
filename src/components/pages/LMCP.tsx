@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Button, Dialog, Pane } from "evergreen-ui";
+// import { Button, Dialog, Pane } from "evergreen-ui";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -161,16 +161,14 @@ const LMCP = (props: LMCPProps) => {
         !props.visible ? "hidden" : ""
       }`}
     >
-      <Pane>
+      {/* <Pane>
         <Dialog
           isShown={stationPickerVisible}
           title="Select Station"
           hasFooter={false}
           onCloseComplete={() => setStationPickerVisible(false)}
         >
-          {/* {({ close }) => ( */}
           <Pane style={{ height: "400px !important" }}>
-            {/* <Paragraph>Manage your own buttons and close interaction</Paragraph> */}
             {csv.map((station, index) => {
               return (
                 <Button
@@ -192,7 +190,6 @@ const LMCP = (props: LMCPProps) => {
 
                     setStationPickerVisible(false);
 
-                    // close();
                   }}
                 >
                   {station["StationCode (string)"]}
@@ -200,9 +197,8 @@ const LMCP = (props: LMCPProps) => {
               );
             })}
           </Pane>
-          {/* )} */}
         </Dialog>
-      </Pane>
+      </Pane> */}
 
       {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker onChange={(date) => setOfdDate(date)} />
