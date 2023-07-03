@@ -45,7 +45,7 @@ function App() {
 
         <div
           className={`w-screen h-fit mt-4 transition-all ${
-            sidebarCollapsed ? "pl-12" : "pl-48"
+            sidebarCollapsed ? "pl-16" : "pl-52"
           }`}
         >
           <Tasks visible={page === "tasks"} />

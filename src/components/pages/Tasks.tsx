@@ -20,7 +20,7 @@ const Tasks = (props: TaskProps) => {
   const [currentTasks, setCurrentTasks] = useState<JSX.Element[]>([]);
   const [taskCounter, setTaskCounter] = useState(0);
 
-  const taskClosedHandler = (taskId: number) => {
+  const taskCanceledHandler = (taskId: number) => {
     setCurrentTasks((prev) => {
       const newTaskList = prev.filter((task) => {
         return task.props.taskId !== taskId;
@@ -53,7 +53,6 @@ const Tasks = (props: TaskProps) => {
           tooltipTitle="Same Day"
           tooltipOpen
           onClick={() => {
-            console.log(taskCounter);
             setNewTaskOpen(false);
             setCurrentTasks((prev) => {
               const newTasks = [
@@ -61,8 +60,8 @@ const Tasks = (props: TaskProps) => {
                 <SameDay
                   key={taskCounter}
                   taskId={taskCounter}
-                  onClose={(taskId) => {
-                    taskClosedHandler(taskId);
+                  onCancel={(taskId) => {
+                    taskCanceledHandler(taskId);
                   }}
                 />,
               ];
@@ -79,7 +78,6 @@ const Tasks = (props: TaskProps) => {
           tooltipTitle="AMXL"
           tooltipOpen
           onClick={() => {
-            console.log(taskCounter);
             setNewTaskOpen(false);
             setCurrentTasks((prev) => {
               const newTasks = [...prev, <AMXL key={taskCounter} />];

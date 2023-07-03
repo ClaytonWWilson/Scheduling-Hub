@@ -16,7 +16,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { isNumeric } from "../../Utilities";
 
 type SameDayProps = {
-  onClose: (taskId: number) => void;
+  onCancel: (taskId: number) => void;
   taskId: number;
 };
 
@@ -69,12 +69,14 @@ const SameDay = (props: SameDayProps) => {
   };
 
   return (
-    <Paper className={"h-fit w-fit px-2 py-2 flex flex-col gap-y-2 relative"}>
+    <Paper
+      className={"h-fit w-[25rem] px-2 py-2 flex flex-col gap-y-2 relative"}
+    >
       <div className="absolute w-fit right-[-20px] top-[-20px] z-[9]">
         <IconButton
           aria-label="delete"
           onClick={() => {
-            props.onClose(props.taskId);
+            props.onCancel(props.taskId);
           }}
         >
           <CancelIcon />
@@ -137,11 +139,11 @@ const SameDay = (props: SameDayProps) => {
 
         className="w-96"
       /> */}
-      <Typography>Same Day Type:</Typography>
+      <Typography className="pl-2">Same Day Type:</Typography>
       <RadioGroup
         value={data.routingType}
         onChange={(e) => setData({ ...data, routingType: e.target.value })}
-        className="w-fit ml-2"
+        className="w-fit pl-4"
       >
         <FormControlLabel
           value="sunrise"
@@ -250,7 +252,7 @@ const SameDay = (props: SameDayProps) => {
         aria-autocomplete="none"
         className="w-96"
       ></TextField>
-      <div>
+      <div className="flex flex-row gap-x-4">
         <TextField
           label="TBAs routed"
           value={data.tbaCount}
@@ -295,7 +297,7 @@ const SameDay = (props: SameDayProps) => {
           }}
           autoComplete="aaaaa"
           aria-autocomplete="none"
-          className="w-48"
+          className="w-full"
         ></TextField>
         <TextField
           label="# of generated routes"
@@ -341,10 +343,10 @@ const SameDay = (props: SameDayProps) => {
           }}
           autoComplete="aaaaa"
           aria-autocomplete="none"
-          className="w-48"
+          className="w-full"
         ></TextField>
       </div>
-      <Typography>
+      <Typography className="pl-2">
         {"Total routes: " +
           (isNumeric(data.routeCount) && isNumeric(data.percent)
             ? Math.ceil(
@@ -353,8 +355,9 @@ const SameDay = (props: SameDayProps) => {
             : "???")}
       </Typography>
 
-      <div className="w-96">
+      <div className="w-96 flex flex-row gap-x-2">
         <Button
+          variant="outlined"
           onClick={() => {
             const totalRoutes = Math.ceil(
               parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
@@ -374,9 +377,10 @@ const SameDay = (props: SameDayProps) => {
             Object.entries(errors).find(([_, val]) => val !== "") !== undefined // No errors
           }
         >
-          Copy Audit
+          Audit
         </Button>
         <Button
+          variant="outlined"
           onClick={() => {
             const totalRoutes = Math.ceil(
               parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
@@ -399,22 +403,25 @@ const SameDay = (props: SameDayProps) => {
             Object.entries(data).find(([_, val]) => val === "") !== undefined
           }
         >
-          Copy Station
+          Station
         </Button>
-        <Button
-          onClick={() =>
-            setData({
-              stationCode: "",
-              routingType: "",
-              dpoLink: "",
-              percent: "",
-              routeCount: "",
-              tbaCount: "",
-            })
-          }
-        >
-          Clear
-        </Button>
+        <div className="ml-auto">
+          <Button
+            variant="contained"
+            onClick={() =>
+              setData({
+                stationCode: "",
+                routingType: "",
+                dpoLink: "",
+                percent: "",
+                routeCount: "",
+                tbaCount: "",
+              })
+            }
+          >
+            Complete Task
+          </Button>
+        </div>
       </div>
     </Paper>
   );
