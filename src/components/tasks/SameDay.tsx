@@ -14,14 +14,45 @@ import {
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { isNumeric } from "../../Utilities";
+import { SameDayData, SameDayErrors } from "../../types/Tasks";
 
 type SameDayProps = {
   onCancel: (taskId: number) => void;
+  onComplete: (taskId: number, data: SameDayData) => void;
   taskId: number;
 };
 
+const isDpoLinkValid = (link: string, stationCode: string) => {
+  if (
+    link.match(
+      /https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g
+    ) === null
+  ) {
+    return false;
+  }
+
+  // BUG: Date in DPO link could be incorrect
+
+  // Return true if station code is blank to avoid confusion. User will not be able to proceed in this state anyways.
+  if (stationCode.length === 0) {
+    return true;
+  }
+
+  if (!link.includes(stationCode)) {
+    return false;
+  }
+  return true;
+};
+
+const isDataValid = (data: SameDayData, errors: SameDayErrors) => {
+  return (
+    Object.entries(data).find(([_, val]) => val === "") === undefined && // No empty data
+    Object.entries(errors).find(([_, val]) => val !== "") === undefined // No errors
+  );
+};
+
 const SameDay = (props: SameDayProps) => {
-  const [data, setData] = useState({
+  const [data, setData] = useState<SameDayData>({
     stationCode: "",
     routingType: "",
     dpoLink: "",
@@ -38,35 +69,13 @@ const SameDay = (props: SameDayProps) => {
     tbaCount: false,
   });
 
-  const [errors, setErrors] = useState({
+  const [errors, setErrors] = useState<SameDayErrors>({
     stationCode: "",
     percent: "",
     dpoLink: "",
     routeCount: "",
     tbaCount: "",
   });
-
-  const isDpoLinkValid = (link: string) => {
-    if (
-      link.match(
-        /https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g
-      ) === null
-    ) {
-      return false;
-    }
-
-    // BUG: Date in DPO link could be incorrect
-
-    // Return true if station code is blank to avoid confusion. User will not be able to proceed in this state anyways.
-    if (data.stationCode.length === 0) {
-      return true;
-    }
-
-    if (!link.includes(data.stationCode)) {
-      return false;
-    }
-    return true;
-  };
 
   return (
     <Paper
@@ -217,7 +226,7 @@ const SameDay = (props: SameDayProps) => {
           setErrors((prev) => {
             let error = "";
 
-            if (!isDpoLinkValid(link)) {
+            if (!isDpoLinkValid(link, data.stationCode)) {
               error = "DPO Link is invalid";
             }
 
@@ -372,10 +381,7 @@ const SameDay = (props: SameDayProps) => {
               } buffer)`
             );
           }}
-          disabled={
-            data.routingType === "" || // No empty data
-            Object.entries(errors).find(([_, val]) => val !== "") !== undefined // No errors
-          }
+          disabled={!isDataValid(data, errors)}
         >
           Audit
         </Button>
@@ -399,25 +405,17 @@ const SameDay = (props: SameDayProps) => {
               } buffer)\nDPO Link: ${data.dpoLink}`
             );
           }}
-          disabled={
-            Object.entries(data).find(([_, val]) => val === "") !== undefined
-          }
+          disabled={!isDataValid(data, errors)}
         >
           Station
         </Button>
         <div className="ml-auto">
           <Button
             variant="contained"
-            onClick={() =>
-              setData({
-                stationCode: "",
-                routingType: "",
-                dpoLink: "",
-                percent: "",
-                routeCount: "",
-                tbaCount: "",
-              })
-            }
+            onClick={() => {
+              props.onComplete(props.taskId, data);
+            }}
+            disabled={!isDataValid(data, errors)}
           >
             Complete Task
           </Button>

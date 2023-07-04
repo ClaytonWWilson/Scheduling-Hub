@@ -10,6 +10,7 @@ import {
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import AMXL from "../tasks/AMXL";
+import { SameDayData } from "../../types/Tasks";
 
 type TaskProps = {
   visible: boolean;
@@ -21,6 +22,16 @@ const Tasks = (props: TaskProps) => {
   const [taskCounter, setTaskCounter] = useState(0);
 
   const taskCanceledHandler = (taskId: number) => {
+    removeTask(taskId);
+  };
+
+  const taskCompletedHandler = (taskId: number, data: SameDayData) => {
+    removeTask(taskId);
+    console.log(data);
+    // TODO: Save to a database
+  };
+
+  const removeTask = (taskId: number) => {
     setCurrentTasks((prev) => {
       const newTaskList = prev.filter((task) => {
         return task.props.taskId !== taskId;
@@ -60,9 +71,8 @@ const Tasks = (props: TaskProps) => {
                 <SameDay
                   key={taskCounter}
                   taskId={taskCounter}
-                  onCancel={(taskId) => {
-                    taskCanceledHandler(taskId);
-                  }}
+                  onComplete={taskCompletedHandler}
+                  onCancel={taskCanceledHandler}
                 />,
               ];
               setTaskCounter((prevCounter) => {
