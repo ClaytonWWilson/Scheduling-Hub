@@ -1,10 +1,37 @@
+type AMXLData = {
+  stationCode: string;
+  startTime: Date | null;
+  endTime: Date | null;
+  exclusion: boolean;
+  planned: string;
+  spr: string;
+  lmcp: string;
+  reductions: string;
+  aa: boolean;
+  rtwLink: string;
+  adhocLink: string;
+};
+
+type AMXLErrors = {
+  stationCode: string;
+  startTime: string;
+  endTime: string;
+  planned: string;
+  spr: string;
+  lmcp: string;
+  reductions: string;
+  rtwLink: string;
+  adhocLink: string;
+};
+
 type SameDayData = {
   stationCode: string;
   routingType: string;
-  dpoLink: string;
   percent: string;
+  dpoLink: string;
   routeCount: string;
-  tbaCount: string;
+  fileTbaCount: string;
+  routedTbaCount: string;
 };
 
 type SameDayErrors = {
@@ -15,4 +42,4 @@ type SameDayErrors = {
   tbaCount: string;
 };
 
-export type { SameDayData, SameDayErrors };
+export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors };

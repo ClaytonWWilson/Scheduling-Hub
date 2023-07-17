@@ -6,11 +6,12 @@ import {
   SpeedDialAction,
   SpeedDialIcon,
 } from "@mui/material";
+import { invoke } from "@tauri-apps/api/tauri";
 
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import AMXL from "../tasks/AMXL";
-import { SameDayData } from "../../types/Tasks";
+import { AMXLData, SameDayData } from "../../types/Tasks";
 
 type TaskProps = {
   visible: boolean;
@@ -25,10 +26,14 @@ const Tasks = (props: TaskProps) => {
     removeTask(taskId);
   };
 
-  const taskCompletedHandler = (taskId: number, data: SameDayData) => {
+  const taskCompletedHandler = (
+    taskId: number,
+    data: SameDayData | AMXLData
+  ) => {
     removeTask(taskId);
     console.log(data);
     // TODO: Save to a database
+    // invoke("save_data", { data: data });
   };
 
   const removeTask = (taskId: number) => {
@@ -55,8 +60,13 @@ const Tasks = (props: TaskProps) => {
         sx={{ position: "fixed", bottom: 16, right: 16 }}
         icon={<SpeedDialIcon />}
         open={newTaskOpen}
-        onOpen={() => setNewTaskOpen(true)}
-        onClose={() => setNewTaskOpen(false)}
+        onOpen={() => {}}
+        onClose={() => {
+          setNewTaskOpen(false);
+        }}
+        onClick={() => {
+          setNewTaskOpen(!newTaskOpen);
+        }}
       >
         <SpeedDialAction
           key="Same Day"
@@ -90,7 +100,15 @@ const Tasks = (props: TaskProps) => {
           onClick={() => {
             setNewTaskOpen(false);
             setCurrentTasks((prev) => {
-              const newTasks = [...prev, <AMXL key={taskCounter} />];
+              const newTasks = [
+                ...prev,
+                <AMXL
+                  key={taskCounter}
+                  taskId={taskCounter}
+                  onComplete={taskCompletedHandler}
+                  onCancel={taskCanceledHandler}
+                />,
+              ];
               setTaskCounter((prevCounter) => {
                 return ++prevCounter;
               });
