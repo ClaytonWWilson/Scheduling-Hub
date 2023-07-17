@@ -25,21 +25,22 @@ type AMXLErrors = {
 };
 
 type SameDayData = {
-  stationCode: string;
-  routingType: string;
-  percent: string;
-  dpoLink: string;
-  routeCount: string;
-  fileTbaCount: string;
-  routedTbaCount: string;
+  stationCode: string | undefined;
+  routingType: "samedaysunrise" | "samedayam" | undefined;
+  bufferPercent: number | undefined;
+  dpoLink: string | undefined;
+  routeCount: number | undefined;
+  fileTbaCount: number | undefined;
+  routedTbaCount: number | undefined;
 };
 
 type SameDayErrors = {
-  stationCode: string;
-  percent: string;
-  dpoLink: string;
-  routeCount: string;
-  tbaCount: string;
+  stationCode: string | undefined;
+  routingType: string | undefined;
+  bufferPercent: string | undefined;
+  dpoLink: string | undefined;
+  routeCount: string | undefined;
+  routedTbaCount: string | undefined;
 };
 
 export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors };

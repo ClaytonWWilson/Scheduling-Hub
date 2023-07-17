@@ -5,14 +5,14 @@ type CSVDecodedRow = {
 const csv2json = (csv: string, options?: { headers?: boolean }) => {
   let rows = csv.split("\n");
 
-  const res = new Array<CSVDecodedRow>(rows.length);
   if (rows.length == 0) {
-    return res;
+    return [];
   }
 
   const colCount = rows[0].split(",").length;
 
   let headers: string[] = [];
+  let res: Array<CSVDecodedRow>;
 
   if (options && options.headers) {
     const headerRow = rows[0];
@@ -20,7 +20,9 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
 
     // Remove header row
     rows.splice(0, 1);
+    res = new Array<CSVDecodedRow>(rows.length - 1);
   } else {
+    res = new Array<CSVDecodedRow>(rows.length - 1);
     // Use generic numbers as the headers
     for (let i = 0; i < colCount; i++) {
       headers.push(i.toString());
@@ -61,9 +63,44 @@ const isNumeric = (str: string) => {
   );
 };
 
+const isDpoLinkValid = (link: string, stationCode: string) => {
+  if (
+    link.match(
+      /^https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g
+    ) === null
+  ) {
+    return false;
+  }
+
+  // BUG: Date in DPO link could be incorrect
+
+  // Return true if station code is blank to avoid confusion. User will not be able to proceed in this state anyways.
+  if (stationCode.length === 0) {
+    return true;
+  }
+
+  if (!link.includes(stationCode)) {
+    return false;
+  }
+  return true;
+};
+
 const isStationCodeValid = (stationCode: string) => {
-  return stationCode.match(/^[A-Z]{3}[1-9]{1}$/) === null;
+  return stationCode.match(/^[A-Z]{3}[1-9]{1}$/) !== null;
+};
+
+const percentChange = (initial: number, final: number) => {
+  const difference = final - initial;
+  const value = difference / Math.abs(initial);
+  return value * 100;
 };
 
 export type { CSVDecodedRow };
-export { csv2json, json2csv, isStationCodeValid, isNumeric };
+export {
+  csv2json,
+  json2csv,
+  isDpoLinkValid,
+  isStationCodeValid,
+  isNumeric,
+  percentChange,
+};

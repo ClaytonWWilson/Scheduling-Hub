@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Autocomplete,
   Button,
@@ -13,7 +13,13 @@ import {
   Typography,
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { csv2json, isNumeric, isStationCodeValid } from "../../Utilities";
+import {
+  csv2json,
+  isDpoLinkValid,
+  isNumeric,
+  isStationCodeValid,
+  percentChange,
+} from "../../Utilities";
 import { SameDayData, SameDayErrors } from "../../types/Tasks";
 import DropArea from "../DropArea";
 
@@ -23,63 +29,76 @@ type SameDayProps = {
   taskId: number;
 };
 
-const isDpoLinkValid = (link: string, stationCode: string) => {
-  if (
-    link.match(
-      /^https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g
-    ) === null
-  ) {
-    return false;
-  }
-
-  // BUG: Date in DPO link could be incorrect
-
-  // Return true if station code is blank to avoid confusion. User will not be able to proceed in this state anyways.
-  if (stationCode.length === 0) {
-    return true;
-  }
-
-  if (!link.includes(stationCode)) {
-    return false;
-  }
-  return true;
+// Stores all the raw strings from the user before they are validated
+type SameDayUserInputs = {
+  stationCode: string;
+  routingType: string;
+  bufferPercent: string;
+  dpoLink: string;
+  routedTbaCount: string;
+  routeCount: string;
 };
 
-const isDataValid = (data: SameDayData, errors: SameDayErrors) => {
-  return (
-    Object.entries(data).find(([_, val]) => val === "") === undefined && // No empty data
-    Object.entries(errors).find(([_, val]) => val !== "") === undefined // No errors
-  );
+const hasInputErrors = (data: SameDayData, errors: SameDayErrors) => {
+  // Check if any data is empty
+  for (let i = 0; i < Object.entries(data).length; i++) {
+    const [key, val] = Object.entries(data)[i];
+    if (val === undefined && key !== "fileTbaCount") {
+      // # of TBAs in file is not required to finish a task, it just helps to verify volume
+      return true;
+    }
+  }
+
+  // Check if there are any errors
+  for (let i = 0; i < Object.entries(errors).length; i++) {
+    const [_key, val] = Object.entries(errors)[i];
+    if (val !== undefined) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 const SameDay = (props: SameDayProps) => {
-  const [data, setData] = useState<SameDayData>({
+  const [userInputs, setUserInputs] = useState<SameDayUserInputs>({
     stationCode: "",
     routingType: "",
-    percent: "",
+    bufferPercent: "",
     dpoLink: "",
     routeCount: "",
-    fileTbaCount: "",
     routedTbaCount: "",
+  });
+
+  const [validatedData, setValidatedData] = useState<SameDayData>({
+    stationCode: undefined,
+    routingType: undefined,
+    bufferPercent: undefined,
+    dpoLink: undefined,
+    routeCount: undefined,
+    fileTbaCount: undefined,
+    routedTbaCount: undefined,
   });
 
   const [focused, setFocused] = useState({
     stationCode: false,
-    percent: false,
+    bufferPercent: false,
     dpoLink: false,
     routeCount: false,
-    tbaCount: false,
+    routedTbaCount: false,
   });
 
   const [errors, setErrors] = useState<SameDayErrors>({
-    stationCode: "",
-    percent: "",
-    dpoLink: "",
-    routeCount: "",
-    tbaCount: "",
+    stationCode: undefined,
+    routingType: undefined,
+    bufferPercent: undefined,
+    dpoLink: undefined,
+    routeCount: undefined,
+    routedTbaCount: undefined,
   });
 
   const importFileHandler = (files: FileList) => {
+    // TODO: Error check if wrong file is dropped
     if (files.length === 0) return;
 
     const inputFile = files[0];
@@ -90,34 +109,123 @@ const SameDay = (props: SameDayProps) => {
       if (!e.target || !e.target.result) return;
 
       const fileJson = csv2json(e.target.result as string, { headers: true });
-      console.log(inputFile, fileJson);
 
-      const inputData: SameDayData = {
-        stationCode: "",
-        routingType: "",
-        percent: "",
-        dpoLink: "",
-        routeCount: "",
-        fileTbaCount: "",
-        routedTbaCount: "",
-      };
+      const stationCode = inputFile.name.split("_")[0].toUpperCase();
 
-      inputData.stationCode = inputFile.name.split("_")[0].toUpperCase();
-
+      let routingType = "";
       if (inputFile.name.toLowerCase().includes("same_day_sunrise")) {
-        inputData.routingType = "samedaysunrise";
+        routingType = "samedaysunrise";
       } else if (inputFile.name.toLowerCase().includes("same_day_am")) {
-        inputData.routingType = "samedayam";
+        routingType = "samedayam";
       }
 
-      // FEATURE: Should this count unique TBAs instead of total lines?
-      inputData.fileTbaCount = fileJson.length.toString();
+      setUserInputs((prev) => {
+        return { ...prev, stationCode, routingType };
+      });
+      validateInputData();
 
-      setData(inputData);
+      // PROPOSAL: Should this count unique TBAs instead of total lines?
+      const fileTbaCount = fileJson.length;
+
+      setValidatedData((currentData) => {
+        return { ...currentData, fileTbaCount };
+      });
     });
 
     reader.readAsText(inputFile);
   };
+
+  // Checks all user input and sets errors and validated data
+  const validateInputData = () => {
+    const errors: SameDayErrors = {
+      stationCode: undefined,
+      routingType: undefined,
+      bufferPercent: undefined,
+      dpoLink: undefined,
+      routeCount: undefined,
+      routedTbaCount: undefined,
+    };
+
+    const validated: SameDayData = {
+      stationCode: undefined,
+      routingType: undefined,
+      bufferPercent: undefined,
+      dpoLink: undefined,
+      routeCount: undefined,
+      routedTbaCount: undefined,
+      fileTbaCount: validatedData.fileTbaCount,
+    };
+
+    // Validate stationCode
+    if (userInputs.stationCode === "") {
+      errors.stationCode = "Station Code cannot be empty.";
+    } else if (!isStationCodeValid(userInputs.stationCode)) {
+      errors.stationCode = "Station Code is invalid.";
+    } else {
+      validated.stationCode = userInputs.stationCode;
+    }
+
+    // Validate routingType
+    if (userInputs.routingType === "") {
+      errors.routingType = "Routing type cannot be blank.";
+    } else if (
+      userInputs.routingType !== "samedaysunrise" &&
+      userInputs.routingType !== "samedayam"
+    ) {
+      errors.routingType =
+        "Routing Type must be either Same Day Sunrise or Same Day AM.";
+    } else {
+      validated.routingType = userInputs.routingType;
+    }
+
+    // Validate bufferPercent
+    if (userInputs.bufferPercent === "") {
+      errors.bufferPercent = "Buffer percentage cannot be empty.";
+    } else if (!isNumeric(userInputs.bufferPercent)) {
+      errors.bufferPercent = "Buffer percentage must be a number.";
+    } else if (parseInt(userInputs.bufferPercent) < 0) {
+      errors.bufferPercent = "Buffer percentage must be a positive number.";
+    } else {
+      validated.bufferPercent = parseInt(userInputs.bufferPercent);
+    }
+
+    // Validate dpoLink
+    if (!isDpoLinkValid(userInputs.dpoLink, userInputs.stationCode)) {
+      errors.dpoLink = "DPO Link is invalid.";
+    } else {
+      validated.dpoLink = userInputs.dpoLink;
+    }
+
+    // Validate routedTbaCount
+    if (userInputs.routedTbaCount === "") {
+      errors.routedTbaCount = "TBAs routed cannot be empty.";
+    } else if (!isNumeric(userInputs.routedTbaCount)) {
+      errors.routedTbaCount = "TBAs routed must be a number.";
+    } else if (parseInt(userInputs.routedTbaCount) < 0) {
+      errors.routedTbaCount = "TBAs routed cannot be negative.";
+    } else {
+      validated.routedTbaCount = parseInt(userInputs.routedTbaCount);
+    }
+
+    // generated routes
+    if (userInputs.routeCount === "") {
+      errors.routeCount = "Number of routes cannot be empty.";
+    } else if (!isNumeric(userInputs.routeCount)) {
+      errors.routeCount = "Number of routes must be a number.";
+    } else if (parseInt(userInputs.routeCount) < 0) {
+      errors.routeCount = "Number of routes cannot be negative.";
+    } else {
+      validated.routeCount = parseInt(userInputs.routeCount);
+    }
+
+    setErrors(errors);
+    setValidatedData((prev) => {
+      return { ...prev, ...validated };
+    });
+  };
+
+  // Automatically validates the inputs when any of their values change
+  useEffect(validateInputData, [userInputs]);
 
   return (
     <DropArea onAccepted={importFileHandler}>
@@ -140,35 +248,23 @@ const SameDay = (props: SameDayProps) => {
             Same Day
           </Typography>
           <Typography className="col-start-3 col-end-4" align="right">
-            {`File TBAs: ${data.fileTbaCount ? data.fileTbaCount : "???"}`}
+            {`File TBAs: ${
+              validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
+            }`}
           </Typography>
         </div>
         <TextField
           label="Station Code"
-          value={data.stationCode}
+          value={userInputs.stationCode}
           onChange={(e) => {
             let code = e.target.value.toUpperCase();
 
-            setErrors((prev) => {
-              let error = "";
-
-              if (isStationCodeValid(code)) {
-                error = "Station Code is invalid.";
-              }
-
-              if (code === "") {
-                error = "Station Code is empty.";
-              }
-
-              return { ...prev, stationCode: error };
-            });
-
-            setData((prev) => {
+            setUserInputs((prev) => {
               return { ...prev, stationCode: code };
             });
           }}
           color={(() => {
-            if (focused.stationCode && data.stationCode.length === 0) {
+            if (focused.stationCode && userInputs.stationCode.length === 0) {
               return "primary";
             } else if (errors.stationCode) {
               return "error";
@@ -176,7 +272,7 @@ const SameDay = (props: SameDayProps) => {
               return "success";
             }
           })()}
-          focused={focused.stationCode || data.stationCode.length != 0}
+          focused={focused.stationCode || userInputs.stationCode.length != 0}
           onFocus={() =>
             setFocused((prev) => {
               return { ...prev, stationCode: true };
@@ -200,8 +296,10 @@ const SameDay = (props: SameDayProps) => {
       /> */}
         <Typography className="pl-2">Same Day Type:</Typography>
         <RadioGroup
-          value={data.routingType}
-          onChange={(e) => setData({ ...data, routingType: e.target.value })}
+          value={userInputs.routingType}
+          onChange={(e) =>
+            setUserInputs({ ...userInputs, routingType: e.target.value })
+          }
           className="w-fit pl-4"
         >
           <FormControlLabel
@@ -220,44 +318,37 @@ const SameDay = (props: SameDayProps) => {
 
         <TextField
           label="Buffer Percentage"
-          value={data.percent}
+          value={userInputs.bufferPercent}
           onChange={(e) => {
             let percent = e.target.value;
 
-            setErrors((prev) => {
-              let error = "";
-
-              if (!isNumeric(percent)) {
-                error = "Buffer percentage must be a number.";
-              } else if (parseInt(percent) < 0) {
-                error = "Buffer percentage must be a positive number.";
-              }
-
-              return { ...prev, percent: error };
-            });
-
-            setData((prev) => {
-              return { ...prev, percent: percent };
+            setUserInputs((prev) => {
+              return { ...prev, bufferPercent: percent };
             });
           }}
           color={(() => {
-            if (focused.percent && data.percent.length === 0) {
+            if (
+              focused.bufferPercent &&
+              userInputs.bufferPercent.length === 0
+            ) {
               return "primary";
-            } else if (errors.percent) {
+            } else if (errors.bufferPercent) {
               return "error";
             } else {
               return "success";
             }
           })()}
-          focused={focused.percent || data.percent.length != 0}
+          focused={
+            focused.bufferPercent || userInputs.bufferPercent.length != 0
+          }
           onFocus={() =>
             setFocused((prev) => {
-              return { ...prev, percent: true };
+              return { ...prev, bufferPercent: true };
             })
           }
           onBlur={() => {
             setFocused((prev) => {
-              return { ...prev, percent: false };
+              return { ...prev, bufferPercent: false };
             });
           }}
           autoComplete="aaaaa"
@@ -269,26 +360,16 @@ const SameDay = (props: SameDayProps) => {
         ></TextField>
         <TextField
           label="DPO Link"
-          value={data.dpoLink}
+          value={userInputs.dpoLink}
           onChange={(e) => {
             let link = e.target.value;
 
-            setErrors((prev) => {
-              let error = "";
-
-              if (!isDpoLinkValid(link, data.stationCode)) {
-                error = "DPO Link is invalid";
-              }
-
-              return { ...prev, dpoLink: error };
-            });
-
-            setData((prev) => {
+            setUserInputs((prev) => {
               return { ...prev, dpoLink: link };
             });
           }}
           color={(() => {
-            if (focused.dpoLink && data.dpoLink.length === 0) {
+            if (focused.dpoLink && userInputs.dpoLink.length === 0) {
               return "primary";
             } else if (errors.dpoLink) {
               return "error";
@@ -296,7 +377,7 @@ const SameDay = (props: SameDayProps) => {
               return "success";
             }
           })()}
-          focused={focused.dpoLink || data.dpoLink.length != 0}
+          focused={focused.dpoLink || userInputs.dpoLink.length != 0}
           onFocus={() =>
             setFocused((prev) => {
               return { ...prev, dpoLink: true };
@@ -314,36 +395,29 @@ const SameDay = (props: SameDayProps) => {
         <div className="flex flex-row gap-x-2">
           <TextField
             label="TBAs routed"
-            value={data.routedTbaCount}
+            value={userInputs.routedTbaCount}
             onChange={(e) => {
               let numOfTBAs = e.target.value;
 
-              setErrors((prev) => {
-                let error = "";
-
-                if (!isNumeric(numOfTBAs)) {
-                  error = "TBAs routed must be a number.";
-                } else if (parseInt(numOfTBAs) < 0) {
-                  error = "TBAs routed cannot be negative.";
-                }
-
-                return { ...prev, tbaCount: error };
-              });
-
-              setData((prev) => {
-                return { ...prev, tbaCount: numOfTBAs };
+              setUserInputs((prev) => {
+                return { ...prev, routedTbaCount: numOfTBAs };
               });
             }}
             color={(() => {
-              if (focused.tbaCount && data.routedTbaCount.length === 0) {
+              if (
+                focused.routedTbaCount &&
+                userInputs.routedTbaCount.length === 0
+              ) {
                 return "primary";
-              } else if (errors.tbaCount) {
+              } else if (errors.routedTbaCount) {
                 return "error";
               } else {
                 return "success";
               }
             })()}
-            focused={focused.tbaCount || data.routedTbaCount.length != 0}
+            focused={
+              focused.routedTbaCount || userInputs.routedTbaCount.length != 0
+            }
             onFocus={() =>
               setFocused((prev) => {
                 return { ...prev, tbaCount: true };
@@ -360,28 +434,16 @@ const SameDay = (props: SameDayProps) => {
           ></TextField>
           <TextField
             label="# of generated routes"
-            value={data.routeCount}
+            value={userInputs.routeCount}
             onChange={(e) => {
               let NumOfRoutes = e.target.value;
 
-              setErrors((prev) => {
-                let error = "";
-
-                if (!isNumeric(NumOfRoutes)) {
-                  error = "Number of routes must be a number.";
-                } else if (parseInt(NumOfRoutes) < 0) {
-                  error = "Number of routes cannot be negative.";
-                }
-
-                return { ...prev, routeCount: error };
-              });
-
-              setData((prev) => {
+              setUserInputs((prev) => {
                 return { ...prev, routeCount: NumOfRoutes };
               });
             }}
             color={(() => {
-              if (focused.routeCount && data.routeCount.length === 0) {
+              if (focused.routeCount && userInputs.routeCount.length === 0) {
                 return "primary";
               } else if (errors.routeCount) {
                 return "error";
@@ -389,7 +451,7 @@ const SameDay = (props: SameDayProps) => {
                 return "success";
               }
             })()}
-            focused={focused.routeCount || data.routeCount.length != 0}
+            focused={focused.routeCount || userInputs.routeCount.length != 0}
             onFocus={() =>
               setFocused((prev) => {
                 return { ...prev, routeCount: true };
@@ -407,9 +469,11 @@ const SameDay = (props: SameDayProps) => {
         </div>
         <Typography className="pl-2">
           {"Total routes: " +
-            (isNumeric(data.routeCount) && isNumeric(data.percent)
+            (isNumeric(userInputs.routeCount) &&
+            isNumeric(userInputs.bufferPercent)
               ? Math.ceil(
-                  parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
+                  parseInt(userInputs.routeCount) *
+                    (1 + parseInt(userInputs.bufferPercent) / 100)
                 )
               : "???")}
         </Typography>
@@ -419,19 +483,31 @@ const SameDay = (props: SameDayProps) => {
             variant="outlined"
             onClick={() => {
               const totalRoutes = Math.ceil(
-                parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
+                parseInt(userInputs.routeCount) *
+                  (1 + parseInt(userInputs.bufferPercent) / 100)
               );
-              navigator.clipboard.writeText(
-                `${data.stationCode} ${
-                  data.routingType == "samedaysunrise"
-                    ? "SAME_DAY_SUNRISE"
-                    : "SAME_DAY_AM"
-                }: ${totalRoutes} total flex routes (${data.routeCount} + ${
-                  totalRoutes - parseInt(data.routeCount)
-                } buffer)`
-              );
+              let blurb = `${userInputs.stationCode} ${
+                userInputs.routingType == "samedaysunrise"
+                  ? "SAME_DAY_SUNRISE"
+                  : "SAME_DAY_AM"
+              }: ${totalRoutes} total flex routes (${userInputs.routeCount} + ${
+                totalRoutes - parseInt(userInputs.routeCount)
+              } buffer)`;
+
+              if (validatedData.fileTbaCount && validatedData.routedTbaCount) {
+                blurb += `\nFile: ${
+                  validatedData.fileTbaCount
+                } TBAs // Routed: ${
+                  validatedData.routedTbaCount
+                } TBAs // Delta: ${percentChange(
+                  validatedData.fileTbaCount,
+                  validatedData.routedTbaCount
+                )}%`;
+              }
+
+              navigator.clipboard.writeText(blurb);
             }}
-            disabled={!isDataValid(data, errors)}
+            disabled={hasInputErrors(validatedData, errors)}
           >
             Audit
           </Button>
@@ -439,23 +515,24 @@ const SameDay = (props: SameDayProps) => {
             variant="outlined"
             onClick={() => {
               const totalRoutes = Math.ceil(
-                parseInt(data.routeCount) * (1 + parseInt(data.percent) / 100)
+                parseInt(userInputs.routeCount) *
+                  (1 + parseInt(userInputs.bufferPercent) / 100)
               );
               navigator.clipboard.writeText(
                 `${
-                  data.routingType == "samedaysunrise"
+                  userInputs.routingType == "samedaysunrise"
                     ? "Same Day Sunrise"
                     : "Same Day AM"
                 } routing complete: ${
-                  data.routedTbaCount
+                  userInputs.routedTbaCount
                 } TBAs routed. ${totalRoutes} total flex routes (${
-                  data.routeCount
+                  userInputs.routeCount
                 } + ${
-                  totalRoutes - parseInt(data.routeCount)
-                } buffer)\nDPO Link: ${data.dpoLink}`
+                  totalRoutes - parseInt(userInputs.routeCount)
+                } buffer)\nDPO Link: ${userInputs.dpoLink}`
               );
             }}
-            disabled={!isDataValid(data, errors)}
+            disabled={hasInputErrors(validatedData, errors)}
           >
             Station
           </Button>
@@ -463,9 +540,9 @@ const SameDay = (props: SameDayProps) => {
             <Button
               variant="contained"
               onClick={() => {
-                props.onComplete(props.taskId, data);
+                props.onComplete(props.taskId, validatedData);
               }}
-              disabled={!isDataValid(data, errors)}
+              disabled={hasInputErrors(validatedData, errors)}
             >
               Complete Task
             </Button>
@@ -480,15 +557,13 @@ export default SameDay;
 
 // FEATURE: Autocomplete station code
 // FEATURE: Easily add stations to autocomplete
-// FEATURE: Adjust percentage with scrollbar
+// PROPOSAL: Adjust percentage with mouse scrollwheel
 // FEATURE: Copy DPO link
 // FEATURE: Toast shown for every copy
 
-// FEATURE: Drop submitted files to easily copy tbas and check # of tbas
+// FEATURE: Click to copy tbas from dropped file
 
-// FEATURE: Audit blurb should include file vs. routed volume
-// File: 300 TBAs // Routed: 240 TBAs // Delta: 22%
-
-// TODO: Separate inputs from state better manage type checking
+// TODO: Separate inputs from state to better manage type checking
 // TODO: Single function to validate all inputs
 // TODO: Show warning if file tbas vs routed tbas has a high variance
+// TODO: Create multiple error severities: info, warn, error
