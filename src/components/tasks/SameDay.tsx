@@ -486,23 +486,25 @@ const SameDay = (props: SameDayProps) => {
                 parseInt(userInputs.routeCount) *
                   (1 + parseInt(userInputs.bufferPercent) / 100)
               );
-              let blurb = `${userInputs.stationCode} ${
+              let blurb = `/md\n**${userInputs.stationCode}** ${
                 userInputs.routingType == "samedaysunrise"
                   ? "SAME_DAY_SUNRISE"
                   : "SAME_DAY_AM"
-              }: ${totalRoutes} total flex routes (${userInputs.routeCount} + ${
+              }: **${totalRoutes}** total flex routes (**${
+                userInputs.routeCount
+              }** + **${
                 totalRoutes - parseInt(userInputs.routeCount)
-              } buffer)`;
+              }** buffer)`;
 
               if (validatedData.fileTbaCount && validatedData.routedTbaCount) {
-                blurb += `\nFile: ${
+                blurb += `\nFile: **${
                   validatedData.fileTbaCount
-                } TBAs // Routed: ${
+                }** TBAs // Routed: **${
                   validatedData.routedTbaCount
-                } TBAs // Delta: ${percentChange(
+                }** TBAs // Delta: **${percentChange(
                   validatedData.fileTbaCount,
                   validatedData.routedTbaCount
-                )}%`;
+                ).toFixed(2)}%**`;
               }
 
               navigator.clipboard.writeText(blurb);
@@ -518,19 +520,20 @@ const SameDay = (props: SameDayProps) => {
                 parseInt(userInputs.routeCount) *
                   (1 + parseInt(userInputs.bufferPercent) / 100)
               );
-              navigator.clipboard.writeText(
-                `${
-                  userInputs.routingType == "samedaysunrise"
-                    ? "Same Day Sunrise"
-                    : "Same Day AM"
-                } routing complete: ${
-                  userInputs.routedTbaCount
-                } TBAs routed. ${totalRoutes} total flex routes (${
-                  userInputs.routeCount
-                } + ${
-                  totalRoutes - parseInt(userInputs.routeCount)
-                } buffer)\nDPO Link: ${userInputs.dpoLink}`
-              );
+
+              const blurb = `${
+                userInputs.routingType == "samedaysunrise"
+                  ? "Same Day Sunrise"
+                  : "Same Day AM"
+              } routing complete: ${
+                userInputs.routedTbaCount
+              } TBAs routed. ${totalRoutes} total flex routes (${
+                userInputs.routeCount
+              } + ${
+                totalRoutes - parseInt(userInputs.routeCount)
+              } buffer).\nDispatch plan: ${userInputs.dpoLink}`;
+
+              navigator.clipboard.writeText(blurb);
             }}
             disabled={hasInputErrors(validatedData, errors)}
           >
