@@ -12,6 +12,10 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import AMXL from "../tasks/AMXL";
 import { AMXLData, SameDayData } from "../../types/Tasks";
+import {
+  QueryableSameDayRouteTask,
+  QueryableStation,
+} from "../../types/Database";
 
 type TaskProps = {
   visible: boolean;
@@ -26,14 +30,62 @@ const Tasks = (props: TaskProps) => {
     removeTask(taskId);
   };
 
-  const taskCompletedHandler = (
-    taskId: number,
-    data: SameDayData | AMXLData
-  ) => {
-    removeTask(taskId);
-    console.log(data);
-    // TODO: Save to a database
-    // invoke("save_data", { data: data });
+  const amxlCompletedHandler = () => {};
+
+  const sameDayCompletedHandler = (taskId: number, data: SameDayData) => {
+    let errorMessage = "";
+    if (data.startTime === undefined)
+      errorMessage += "Start Time is undefined.\n";
+    if (data.stationCode === undefined)
+      errorMessage += "Station Code is undefined.\n";
+    if (data.routingType === undefined)
+      errorMessage += "Routing Type is undefined.\n";
+    if (data.bufferPercent === undefined)
+      errorMessage += "Buffer Percent is undefined.\n";
+    if (data.dpoLink === undefined) errorMessage += "DPO Link is undefined.\n";
+    if (data.dpoCompleteTime === undefined)
+      errorMessage += "DPO complete time is undefined.\n";
+    if (data.routeCount === undefined)
+      errorMessage += "Route Count is undefined.\n";
+    if (data.routedTbaCount === undefined)
+      errorMessage += "Routed TBA count is undefined.\n";
+    if (data.endTime === undefined) errorMessage += "End Time is undefined.\n";
+
+    if (errorMessage !== "") {
+      // TODO: Show error dialog
+      console.error(errorMessage);
+      return;
+    }
+
+    const insertableStation: QueryableStation = {
+      stationCode: data.stationCode as string,
+    };
+
+    invoke("insert_station", insertableStation)
+      .then(() => {
+        const insertableTaskData: QueryableSameDayRouteTask = {
+          stationCode: data.stationCode as string,
+          startTime: data.startTime as string,
+          tbaSubmittedCount: data.fileTbaCount,
+          dpoCompleteTime: data.dpoCompleteTime as string,
+          endTime: data.endTime as string,
+          sameDayType: data.routingType as string,
+          bufferPercent: data.bufferPercent as number,
+          dpoLink: data.dpoLink as string,
+          tbaRoutedCount: data.routedTbaCount as number,
+          routeCount: data.routeCount as number,
+        };
+
+        return invoke("insert_same_day_task", insertableTaskData);
+      })
+      .then((res) => {
+        console.log(res);
+        removeTask(taskId);
+      })
+      .catch((err) => {
+        console.error(err);
+        // TODO: Show error dialog
+      });
   };
 
   const removeTask = (taskId: number) => {
@@ -81,7 +133,7 @@ const Tasks = (props: TaskProps) => {
                 <SameDay
                   key={taskCounter}
                   taskId={taskCounter}
-                  onComplete={taskCompletedHandler}
+                  onComplete={sameDayCompletedHandler}
                   onCancel={taskCanceledHandler}
                 />,
               ];
@@ -105,7 +157,7 @@ const Tasks = (props: TaskProps) => {
                 <AMXL
                   key={taskCounter}
                   taskId={taskCounter}
-                  onComplete={taskCompletedHandler}
+                  onComplete={amxlCompletedHandler}
                   onCancel={taskCanceledHandler}
                 />,
               ];
@@ -122,3 +174,5 @@ const Tasks = (props: TaskProps) => {
 };
 
 export default Tasks;
+
+// TODO: Confirm before closing or canceling task

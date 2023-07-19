@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 type CSVDecodedRow = {
   [header: string]: string;
 };
@@ -95,6 +97,16 @@ const percentChange = (initial: number, final: number) => {
   return value * 100;
 };
 
+const dateToSQLiteDateString = (date: Date) => {
+  // const year = date.getFullYear()
+  // const month = String(date.getMonth()).padStart(4, '0')
+  // const day =
+
+  // const dateString = `YYYY-MM-DD HH:MM:SS.SSS`
+  const dateString = format(date, "yyyy-MM-dd HH:mm:ss.SSS");
+  return dateString;
+};
+
 export type { CSVDecodedRow };
 export {
   csv2json,
@@ -103,4 +115,5 @@ export {
   isStationCodeValid,
   isNumeric,
   percentChange,
+  dateToSQLiteDateString,
 };

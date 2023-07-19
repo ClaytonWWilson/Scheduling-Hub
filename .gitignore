@@ -23,5 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Database file
+# Database files
 src-tauri/src/database.db
+Scheduling Hub.session.sql

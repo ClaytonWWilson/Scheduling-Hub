@@ -13,8 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
+// import CopyAllIcon from "@mui/icons-material/CopyAll";
 import {
   csv2json,
+  dateToSQLiteDateString,
   isDpoLinkValid,
   isNumeric,
   isStationCodeValid,
@@ -39,11 +41,11 @@ type SameDayUserInputs = {
   routeCount: string;
 };
 
-const hasInputErrors = (data: SameDayData, errors: SameDayErrors) => {
-  // Check if any data is empty
+const areInputErrors = (data: SameDayData, errors: SameDayErrors) => {
+  // Check if any input data is empty
   for (let i = 0; i < Object.entries(data).length; i++) {
     const [key, val] = Object.entries(data)[i];
-    if (val === undefined && key !== "fileTbaCount") {
+    if (val === undefined && key !== "fileTbaCount" && key !== "endTime") {
       // # of TBAs in file is not required to finish a task, it just helps to verify volume
       return true;
     }
@@ -71,13 +73,16 @@ const SameDay = (props: SameDayProps) => {
   });
 
   const [validatedData, setValidatedData] = useState<SameDayData>({
+    startTime: undefined,
     stationCode: undefined,
     routingType: undefined,
     bufferPercent: undefined,
     dpoLink: undefined,
+    dpoCompleteTime: undefined,
     routeCount: undefined,
     fileTbaCount: undefined,
     routedTbaCount: undefined,
+    endTime: undefined,
   });
 
   const [focused, setFocused] = useState({
@@ -147,13 +152,16 @@ const SameDay = (props: SameDayProps) => {
     };
 
     const validated: SameDayData = {
+      startTime: validatedData.startTime,
       stationCode: undefined,
       routingType: undefined,
       bufferPercent: undefined,
       dpoLink: undefined,
+      dpoCompleteTime: validatedData.dpoCompleteTime,
       routeCount: undefined,
       routedTbaCount: undefined,
       fileTbaCount: validatedData.fileTbaCount,
+      endTime: validatedData.endTime,
     };
 
     // Validate stationCode
@@ -187,6 +195,10 @@ const SameDay = (props: SameDayProps) => {
       errors.bufferPercent = "Buffer percentage must be a positive number.";
     } else {
       validated.bufferPercent = parseInt(userInputs.bufferPercent);
+      validated.dpoCompleteTime = dateToSQLiteDateString(new Date());
+    }
+    if (errors.bufferPercent) {
+      validated.dpoCompleteTime = undefined;
     }
 
     // Validate dpoLink
@@ -227,6 +239,13 @@ const SameDay = (props: SameDayProps) => {
   // Automatically validates the inputs when any of their values change
   useEffect(validateInputData, [userInputs]);
 
+  // Runs once when the component is mounted
+  useEffect(() => {
+    setValidatedData((prev) => {
+      return { ...prev, startTime: dateToSQLiteDateString(new Date()) };
+    });
+  }, []);
+
   return (
     <DropArea onAccepted={importFileHandler}>
       <Paper
@@ -247,11 +266,14 @@ const SameDay = (props: SameDayProps) => {
           <Typography className="col-start-2 col-end-3" align="center">
             Same Day
           </Typography>
-          <Typography className="col-start-3 col-end-4" align="right">
+          {/* <div className="border-green col-start-3 col-end-4"> */}
+          <Typography align="right">
             {`File TBAs: ${
               validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
             }`}
           </Typography>
+          {/* <CopyAllIcon className="border-blue float-right" /> */}
+          {/* </div> */}
         </div>
         <TextField
           label="Station Code"
@@ -509,7 +531,7 @@ const SameDay = (props: SameDayProps) => {
 
               navigator.clipboard.writeText(blurb);
             }}
-            disabled={hasInputErrors(validatedData, errors)}
+            disabled={areInputErrors(validatedData, errors)}
           >
             Audit
           </Button>
@@ -535,7 +557,7 @@ const SameDay = (props: SameDayProps) => {
 
               navigator.clipboard.writeText(blurb);
             }}
-            disabled={hasInputErrors(validatedData, errors)}
+            disabled={areInputErrors(validatedData, errors)}
           >
             Station
           </Button>
@@ -543,9 +565,16 @@ const SameDay = (props: SameDayProps) => {
             <Button
               variant="contained"
               onClick={() => {
-                props.onComplete(props.taskId, validatedData);
+                const completeTime = dateToSQLiteDateString(new Date());
+                setValidatedData((prev) => {
+                  return { ...prev, endTime: completeTime };
+                });
+                props.onComplete(props.taskId, {
+                  ...validatedData,
+                  endTime: completeTime,
+                });
               }}
-              disabled={hasInputErrors(validatedData, errors)}
+              disabled={areInputErrors(validatedData, errors)}
             >
               Complete Task
             </Button>
@@ -570,3 +599,6 @@ export default SameDay;
 // TODO: Single function to validate all inputs
 // TODO: Show warning if file tbas vs routed tbas has a high variance
 // TODO: Create multiple error severities: info, warn, error
+
+// TODO: Set up dynamic audit based on which data is present in the inputs
+// TODO: Dynamic tooltips on buttons to give more info

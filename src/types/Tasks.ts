@@ -25,13 +25,16 @@ type AMXLErrors = {
 };
 
 type SameDayData = {
+  startTime: string | undefined;
   stationCode: string | undefined;
   routingType: "samedaysunrise" | "samedayam" | undefined;
   bufferPercent: number | undefined;
   dpoLink: string | undefined;
+  dpoCompleteTime: string | undefined;
   routeCount: number | undefined;
   fileTbaCount: number | undefined;
   routedTbaCount: number | undefined;
+  endTime: string | undefined;
 };
 
 type SameDayErrors = {

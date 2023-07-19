@@ -19,9 +19,10 @@ fn main() {
 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            db::add_station,
+            db::insert_station,
             db::get_stations,
-            db::delete_station
+            db::delete_station,
+            db::insert_same_day_task
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
