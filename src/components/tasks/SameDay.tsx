@@ -442,12 +442,12 @@ const SameDay = (props: SameDayProps) => {
             }
             onFocus={() =>
               setFocused((prev) => {
-                return { ...prev, tbaCount: true };
+                return { ...prev, routedTbaCount: true };
               })
             }
             onBlur={() => {
               setFocused((prev) => {
-                return { ...prev, tbaCount: false };
+                return { ...prev, routedTbaCount: false };
               });
             }}
             autoComplete="aaaaa"
@@ -489,16 +489,28 @@ const SameDay = (props: SameDayProps) => {
             className="w-full"
           ></TextField>
         </div>
-        <Typography className="pl-2">
-          {"Total routes: " +
-            (isNumeric(userInputs.routeCount) &&
-            isNumeric(userInputs.bufferPercent)
-              ? Math.ceil(
-                  parseInt(userInputs.routeCount) *
-                    (1 + parseInt(userInputs.bufferPercent) / 100)
-                )
-              : "???")}
-        </Typography>
+        <div className="flex flex-row gap-x-2">
+          <Typography className="pl-2">
+            {"Total routes: " +
+              (isNumeric(userInputs.routeCount) &&
+              isNumeric(userInputs.bufferPercent)
+                ? Math.ceil(
+                    parseInt(userInputs.routeCount) *
+                      (1 + parseInt(userInputs.bufferPercent) / 100)
+                  )
+                : "???")}
+          </Typography>
+          <div className="ml-auto">
+            <Typography className="pr-2 ml-auto">{`Delta: ${
+              validatedData.fileTbaCount && validatedData.routedTbaCount
+                ? percentChange(
+                    validatedData.fileTbaCount,
+                    validatedData.routedTbaCount
+                  ).toFixed(2) + "%"
+                : "???"
+            }`}</Typography>
+          </div>
+        </div>
 
         <div className="w-96 flex flex-row gap-x-2">
           <Button
@@ -602,3 +614,4 @@ export default SameDay;
 
 // TODO: Set up dynamic audit based on which data is present in the inputs
 // TODO: Dynamic tooltips on buttons to give more info
+// TODO: Add helpertext prop to textfield to show errors
