@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 type CSVDecodedRow = {
-  [header: string]: string;
+  [header: string]: string | undefined;
 };
 
 const csv2json = (csv: string, options?: { headers?: boolean }) => {
@@ -43,13 +43,25 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
 
     for (let i = 0; i < values.length; i++) {
       // TODO: Check for duplicates
-      decodedRow[headers[i]] = values[i];
+      const dirtyValue = values[i].trim();
+      let cleanValue: string;
+
+      if (
+        dirtyValue.startsWith('"') &&
+        dirtyValue.endsWith('"') &&
+        !dirtyValue.includes(" ")
+      ) {
+        cleanValue = dirtyValue.slice(1).slice(0, -1);
+      } else {
+        cleanValue = dirtyValue;
+      }
+
+      decodedRow[headers[i]] = cleanValue;
     }
 
     res[index] = decodedRow;
   });
 
-  // TODO: Delete empty rows from array before returning
   return res;
 };
 
