@@ -127,7 +127,6 @@ const SameDay = (props: SameDayProps) => {
       setUserInputs((prev) => {
         return { ...prev, stationCode, routingType };
       });
-      validateInputData();
 
       // PROPOSAL: Should this count unique TBAs instead of total lines?
       const fileTbaCount = fileJson.length;
@@ -615,3 +614,4 @@ export default SameDay;
 // TODO: Set up dynamic audit based on which data is present in the inputs
 // TODO: Dynamic tooltips on buttons to give more info
 // TODO: Add helpertext prop to textfield to show errors
+// TODO: Show warning when dropping file will overwrite values
