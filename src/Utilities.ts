@@ -42,7 +42,7 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
     let decodedRow: CSVDecodedRow = {};
 
     for (let i = 0; i < values.length; i++) {
-      // TODO: Check for duplicates
+      // TODO: Check for duplicate keys
       const dirtyValue = values[i].trim();
       let cleanValue: string;
 
@@ -67,14 +67,24 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
 
 const json2csv = (json: {}) => {};
 
-const isNumeric = (str: string) => {
+const isNumeric = (str: string, { ignoreCommas = false } = {}) => {
   if (typeof str != "string") return false; // we only process strings!
+  let g = "2,012";
+
+  if (ignoreCommas) {
+    str = str.replaceAll(",", "");
+  }
   return (
-    // deepcode ignore UseNumberIsNan: NumberisNan does not have the necessary functionality
     // @ts-expect-error
+    // file deepcode ignore UseNumberIsNan: NumberisNan does not have the necessary functionality
     !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
     !isNaN(parseFloat(str))
   );
+};
+
+const coerceStringToInteger = (str: string) => {
+  str = str.replaceAll(",", "").trim();
+  return parseInt(str);
 };
 
 const isDpoLinkValid = (link: string, stationCode: string) => {
@@ -122,6 +132,7 @@ const dateToSQLiteDateString = (date: Date) => {
 export type { CSVDecodedRow };
 export {
   csv2json,
+  coerceStringToInteger,
   json2csv,
   isDpoLinkValid,
   isStationCodeValid,

@@ -13,8 +13,9 @@ import {
   Typography,
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
-// import CopyAllIcon from "@mui/icons-material/CopyAll";
+import CopyAllIcon from "@mui/icons-material/CopyAll";
 import {
+  CSVDecodedRow,
   csv2json,
   dateToSQLiteDateString,
   isDpoLinkValid,
@@ -24,6 +25,7 @@ import {
 } from "../../Utilities";
 import { SameDayData, SameDayErrors } from "../../types/Tasks";
 import DropArea from "../DropArea";
+import IconTypography from "../IconTypography";
 
 type SameDayProps = {
   onCancel: (taskId: number) => void;
@@ -93,6 +95,10 @@ const SameDay = (props: SameDayProps) => {
     routedTbaCount: false,
   });
 
+  const [fileData, setFileData] = useState<CSVDecodedRow[] | undefined>(
+    undefined
+  );
+
   const [errors, setErrors] = useState<SameDayErrors>({
     stationCode: undefined,
     routingType: undefined,
@@ -128,12 +134,13 @@ const SameDay = (props: SameDayProps) => {
         return { ...prev, stationCode, routingType };
       });
 
-      // PROPOSAL: Should this count unique TBAs instead of total lines?
       const fileTbaCount = fileJson.length;
 
       setValidatedData((currentData) => {
         return { ...currentData, fileTbaCount };
       });
+
+      setFileData(fileJson);
     });
 
     reader.readAsText(inputFile);
@@ -235,6 +242,17 @@ const SameDay = (props: SameDayProps) => {
     });
   };
 
+  const copyTbasToClipboard = () => {
+    if (!fileData) return;
+
+    let tbas = "";
+    fileData.forEach((row) => {
+      tbas += `${row["Tracking Id"]}\n`;
+    });
+
+    navigator.clipboard.writeText(tbas);
+  };
+
   // Automatically validates the inputs when any of their values change
   useEffect(validateInputData, [userInputs]);
 
@@ -261,18 +279,18 @@ const SameDay = (props: SameDayProps) => {
           </IconButton>
         </div>
 
-        <div className="grid grid-cols-3">
-          <Typography className="col-start-2 col-end-3" align="center">
+        <div className="flex">
+          <Typography className="pl-1" align="left" variant="h5">
             Same Day
           </Typography>
-          {/* <div className="border-green col-start-3 col-end-4"> */}
-          <Typography align="right">
-            {`File TBAs: ${
-              validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
-            }`}
-          </Typography>
-          {/* <CopyAllIcon className="border-blue float-right" /> */}
-          {/* </div> */}
+          <IconTypography
+            className="ml-auto"
+            align="right"
+            icon={CopyAllIcon}
+            onClick={copyTbasToClipboard}
+          >{`File TBAs: ${
+            validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
+          }`}</IconTypography>
         </div>
         <TextField
           label="Station Code"
@@ -341,7 +359,7 @@ const SameDay = (props: SameDayProps) => {
           label="Buffer Percentage"
           value={userInputs.bufferPercent}
           onChange={(e) => {
-            let percent = e.target.value;
+            const percent = e.target.value.replaceAll(",", "");
 
             setUserInputs((prev) => {
               return { ...prev, bufferPercent: percent };
@@ -418,7 +436,7 @@ const SameDay = (props: SameDayProps) => {
             label="TBAs routed"
             value={userInputs.routedTbaCount}
             onChange={(e) => {
-              let numOfTBAs = e.target.value;
+              let numOfTBAs = e.target.value.replaceAll(",", "");
 
               setUserInputs((prev) => {
                 return { ...prev, routedTbaCount: numOfTBAs };
@@ -457,7 +475,7 @@ const SameDay = (props: SameDayProps) => {
             label="# of generated routes"
             value={userInputs.routeCount}
             onChange={(e) => {
-              let NumOfRoutes = e.target.value;
+              let NumOfRoutes = e.target.value.replaceAll(",", "");
 
               setUserInputs((prev) => {
                 return { ...prev, routeCount: NumOfRoutes };
@@ -604,10 +622,6 @@ export default SameDay;
 // FEATURE: Copy DPO link
 // FEATURE: Toast shown for every copy
 
-// FEATURE: Click to copy tbas from dropped file
-
-// TODO: Separate inputs from state to better manage type checking
-// TODO: Single function to validate all inputs
 // TODO: Show warning if file tbas vs routed tbas has a high variance
 // TODO: Create multiple error severities: info, warn, error
 
