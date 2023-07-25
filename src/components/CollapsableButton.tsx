@@ -32,4 +32,3 @@ const CollapsableButton = (props: CollapsableButtonProps) => {
 };
 
 export default CollapsableButton;
-// FEATURE: Add hover effect to buttons

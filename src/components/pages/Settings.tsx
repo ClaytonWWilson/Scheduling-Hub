@@ -13,7 +13,7 @@ const Settings = (props: SettingsProps) => {
 
   return (
     <div
-      className={`border-2 border-solid border-green-500 h-full w-full px-2 py-2 flex flex-col ${
+      className={`border-green h-full w-full px-2 py-2 flex flex-col ${
         !props.visible ? "hidden" : ""
       }`}
     >
@@ -41,3 +41,7 @@ const Settings = (props: SettingsProps) => {
 };
 
 export default Settings;
+
+// TODO: Display version number somewhere in here
+// PROPOSAL: In-app changelog?
+// PROPOSAL: Add options to change what is copied for the audits

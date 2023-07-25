@@ -66,7 +66,10 @@ function App() {
 
 export default App;
 
-// FEATURE: Run multiple of the same type of routing task.
 // FEATURE: Stats tracking: Number of tasks completed per day/hour. Steps where most time is spent.
+// FEATURE: Confetti when you complete a task faster than your previous record for the month/week
+// FEATURE: Achievements
+// FEATURE: Ask before closing if a task is currently open
 
 // TODO: Add aria props where necessary
+// TODO: Add logging to every step of the process
