@@ -146,6 +146,31 @@ const SameDay = (props: SameDayProps) => {
     reader.readAsText(inputFile);
   };
 
+  const percentToTextColor = (
+    percent: number,
+    target: "high" | "low",
+    good: number,
+    bad: number
+  ) => {
+    if (target === "low") {
+      if (percent <= good) {
+        return "text-green-500";
+      } else if (percent > good && percent <= bad) {
+        return "text-yellow-400";
+      } else {
+        return "text-red-500";
+      }
+    } else {
+      if (percent >= good) {
+        return "text-green-500";
+      } else if (percent < good && percent >= bad) {
+        return "text-yellow-400";
+      } else {
+        return "text-red-500";
+      }
+    }
+  };
+
   // Checks all user input and sets errors and validated data
   const validateInputData = () => {
     const errors: SameDayErrors = {
@@ -518,7 +543,21 @@ const SameDay = (props: SameDayProps) => {
                 : "???")}
           </Typography>
           <div className="ml-auto">
-            <Typography className="pr-2 ml-auto">{`Delta: ${
+            <Typography
+              className={`pr-2 ml-auto ${
+                validatedData.fileTbaCount && validatedData.routedTbaCount
+                  ? percentToTextColor(
+                      percentChange(
+                        validatedData.fileTbaCount,
+                        validatedData.routedTbaCount
+                      ),
+                      "low",
+                      5,
+                      10
+                    )
+                  : ""
+              }`}
+            >{`Delta: ${
               validatedData.fileTbaCount && validatedData.routedTbaCount
                 ? percentChange(
                     validatedData.fileTbaCount,
