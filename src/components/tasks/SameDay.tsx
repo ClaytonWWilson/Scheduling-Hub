@@ -26,6 +26,7 @@ import {
 import { SameDayData, SameDayErrors } from "../../types/Tasks";
 import DropArea from "../DropArea";
 import IconTypography from "../IconTypography";
+import { enqueueSnackbar } from "notistack";
 
 type SameDayProps = {
   onCancel: (taskId: number) => void;
@@ -381,14 +382,17 @@ const SameDay = (props: SameDayProps) => {
         </div>
 
         <div className="flex">
-          <Typography className="pl-1" align="left" variant="h5">
+          <Typography className="pl-1 py-2" align="left" variant="h5">
             Same Day
           </Typography>
           <IconTypography
             className="ml-auto"
             align="right"
             icon={CopyAllIcon}
-            onClick={copyTbasToClipboard}
+            onClick={() => {
+              copyTbasToClipboard();
+              enqueueSnackbar("TBAs copied", { variant: "success" });
+            }}
           >{`File TBAs: ${
             validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
           }`}</IconTypography>
@@ -653,8 +657,12 @@ const SameDay = (props: SameDayProps) => {
                 areInputErrors(validatedData, errors)
               ) {
                 navigator.clipboard.writeText(getVolumeAudit());
+                enqueueSnackbar("Volume audit copied", { variant: "success" });
               } else if (!areInputErrors(validatedData, errors)) {
                 navigator.clipboard.writeText(getDispatchAudit());
+                enqueueSnackbar("Dispatch audit copied", {
+                  variant: "success",
+                });
               }
             }}
             disabled={
@@ -685,6 +693,9 @@ const SameDay = (props: SameDayProps) => {
               } buffer).\nDispatch plan: ${userInputs.dpoLink}`;
 
               navigator.clipboard.writeText(blurb);
+              enqueueSnackbar("Station blurb copied", {
+                variant: "success",
+              });
             }}
             disabled={areInputErrors(validatedData, errors)}
           >
@@ -720,7 +731,6 @@ export default SameDay;
 // FEATURE: Easily add stations to autocomplete
 // PROPOSAL: Adjust percentage with mouse scrollwheel
 // FEATURE: Copy DPO link
-// FEATURE: Toast shown for every copy
 
 // TODO: Create multiple error severities: info, warn, error
 

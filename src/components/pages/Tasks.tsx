@@ -16,6 +16,7 @@ import {
   QueryableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
+import { enqueueSnackbar } from "notistack";
 
 type TaskProps = {
   visible: boolean;
@@ -81,6 +82,7 @@ const Tasks = (props: TaskProps) => {
       .then((res) => {
         console.log(res);
         removeTask(taskId);
+        enqueueSnackbar("Same Day task completed", { variant: "success" });
       })
       .catch((err) => {
         console.error(err);

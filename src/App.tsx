@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
 import CollapsableSidebar from "./components/CollapsableSidebar";
 import LMCP from "./components/pages/LMCP";
 import Settings from "./components/pages/Settings";
 import Tasks from "./components/pages/Tasks";
 import { AppSettings, Themes } from "./types/Settings";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
+import { SnackbarProvider, enqueueSnackbar } from "notistack";
 import { muiLightRedTheme, muiDarkRedTheme } from "./Themes";
 
 const defaultAppSettings: AppSettings = {
@@ -29,7 +29,6 @@ function App() {
   const [appSettings, setAppSettings] =
     useState<AppSettings>(defaultAppSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   const muiTheme = getMuiTheme(appSettings.theme);
 
   return (
@@ -42,7 +41,6 @@ function App() {
           onSelect={(page) => setPage(page)}
           onCollapse={(status) => setSidebarCollapsed(status)}
         />
-
         <div
           className={`w-screen h-fit mt-4 transition-all ${
             sidebarCollapsed ? "pl-16" : "pl-52"
@@ -59,6 +57,7 @@ function App() {
             }}
           />
         </div>
+        <SnackbarProvider autoHideDuration={1500} disableWindowBlurListener />
       </div>
     </ThemeProvider>
   );
