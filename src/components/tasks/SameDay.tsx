@@ -653,7 +653,7 @@ const SameDay = (props: SameDayProps) => {
                 areInputErrors(validatedData, errors)
               ) {
                 navigator.clipboard.writeText(getVolumeAudit());
-              } else if (!areInputErrors) {
+              } else if (!areInputErrors(validatedData, errors)) {
                 navigator.clipboard.writeText(getDispatchAudit());
               }
             }}
