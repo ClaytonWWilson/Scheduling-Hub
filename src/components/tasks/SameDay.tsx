@@ -43,6 +43,7 @@ type SameDayUserInputs = {
   routeCount: string;
 };
 
+// Checks all inputs
 const areInputErrors = (data: SameDayData, errors: SameDayErrors) => {
   // Check if any input data is empty
   for (let i = 0; i < Object.entries(data).length; i++) {
@@ -62,6 +63,62 @@ const areInputErrors = (data: SameDayData, errors: SameDayErrors) => {
   }
 
   return false;
+};
+
+// Only check inputs required for volume check
+const areVolumeCheckErrors = (data: SameDayData, errors: SameDayErrors) => {
+  // Can't do a volume check without file volume
+  if (!data.fileTbaCount) return true;
+
+  const volumeCheckRequiredKeys = [
+    "stationCode",
+    "routingType",
+    "routedTbaCount",
+    "fileTbaCount",
+  ];
+
+  // Check if any required input data is missing
+  for (let i = 0; i < Object.entries(data).length; i++) {
+    const [key, val] = Object.entries(data)[i];
+    if (volumeCheckRequiredKeys.indexOf(key) != -1 && val === undefined) {
+      return true;
+    }
+  }
+
+  // Check if there are any errors in the required data
+  for (let i = 0; i < Object.entries(errors).length; i++) {
+    const [key, val] = Object.entries(errors)[i];
+    if (volumeCheckRequiredKeys.indexOf(key) != -1 && val !== undefined) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const percentToTextColor = (
+  percent: number,
+  target: "high" | "low",
+  good: number,
+  bad: number
+) => {
+  if (target === "low") {
+    if (percent <= good) {
+      return "text-green-500";
+    } else if (percent > good && percent <= bad) {
+      return "text-yellow-400";
+    } else {
+      return "text-red-500";
+    }
+  } else {
+    if (percent >= good) {
+      return "text-green-500";
+    } else if (percent < good && percent >= bad) {
+      return "text-yellow-400";
+    } else {
+      return "text-red-500";
+    }
+  }
 };
 
 const SameDay = (props: SameDayProps) => {
@@ -146,29 +203,48 @@ const SameDay = (props: SameDayProps) => {
     reader.readAsText(inputFile);
   };
 
-  const percentToTextColor = (
-    percent: number,
-    target: "high" | "low",
-    good: number,
-    bad: number
-  ) => {
-    if (target === "low") {
-      if (percent <= good) {
-        return "text-green-500";
-      } else if (percent > good && percent <= bad) {
-        return "text-yellow-400";
-      } else {
-        return "text-red-500";
-      }
-    } else {
-      if (percent >= good) {
-        return "text-green-500";
-      } else if (percent < good && percent >= bad) {
-        return "text-yellow-400";
-      } else {
-        return "text-red-500";
-      }
+  const getVolumeAudit = () => {
+    if (!validatedData.fileTbaCount || !validatedData.routedTbaCount) return "";
+
+    const blurb = `/md\n**${userInputs.stationCode}** ${
+      userInputs.routingType == "samedaysunrise"
+        ? "SAME_DAY_SUNRISE"
+        : "SAME_DAY_AM"
+    }: Routing is complete.\nFile: **${
+      validatedData.fileTbaCount
+    }** TBAs // Routed: **${
+      validatedData.routedTbaCount
+    }** TBAs // Delta: **${percentChange(
+      validatedData.fileTbaCount,
+      validatedData.routedTbaCount
+    ).toFixed(2)}%**`;
+
+    return blurb;
+  };
+
+  const getDispatchAudit = () => {
+    const totalRoutes = Math.ceil(
+      parseInt(userInputs.routeCount) *
+        (1 + parseInt(userInputs.bufferPercent) / 100)
+    );
+    let blurb = `/md\n**${userInputs.stationCode}** ${
+      userInputs.routingType == "samedaysunrise"
+        ? "SAME_DAY_SUNRISE"
+        : "SAME_DAY_AM"
+    }: **${totalRoutes}** total flex routes (**${userInputs.routeCount}** + **${
+      totalRoutes - parseInt(userInputs.routeCount)
+    }** buffer)`;
+
+    if (validatedData.fileTbaCount && validatedData.routedTbaCount) {
+      blurb += `\nFile: **${validatedData.fileTbaCount}** TBAs // Routed: **${
+        validatedData.routedTbaCount
+      }** TBAs // Delta: **${percentChange(
+        validatedData.fileTbaCount,
+        validatedData.routedTbaCount
+      ).toFixed(2)}%**`;
     }
+
+    return blurb;
   };
 
   // Checks all user input and sets errors and validated data
@@ -572,34 +648,19 @@ const SameDay = (props: SameDayProps) => {
           <Button
             variant="outlined"
             onClick={() => {
-              const totalRoutes = Math.ceil(
-                parseInt(userInputs.routeCount) *
-                  (1 + parseInt(userInputs.bufferPercent) / 100)
-              );
-              let blurb = `/md\n**${userInputs.stationCode}** ${
-                userInputs.routingType == "samedaysunrise"
-                  ? "SAME_DAY_SUNRISE"
-                  : "SAME_DAY_AM"
-              }: **${totalRoutes}** total flex routes (**${
-                userInputs.routeCount
-              }** + **${
-                totalRoutes - parseInt(userInputs.routeCount)
-              }** buffer)`;
-
-              if (validatedData.fileTbaCount && validatedData.routedTbaCount) {
-                blurb += `\nFile: **${
-                  validatedData.fileTbaCount
-                }** TBAs // Routed: **${
-                  validatedData.routedTbaCount
-                }** TBAs // Delta: **${percentChange(
-                  validatedData.fileTbaCount,
-                  validatedData.routedTbaCount
-                ).toFixed(2)}%**`;
+              if (
+                !areVolumeCheckErrors(validatedData, errors) &&
+                areInputErrors(validatedData, errors)
+              ) {
+                navigator.clipboard.writeText(getVolumeAudit());
+              } else if (!areInputErrors) {
+                navigator.clipboard.writeText(getDispatchAudit());
               }
-
-              navigator.clipboard.writeText(blurb);
             }}
-            disabled={areInputErrors(validatedData, errors)}
+            disabled={
+              areVolumeCheckErrors(validatedData, errors) &&
+              areInputErrors(validatedData, errors)
+            }
           >
             Audit
           </Button>
@@ -661,10 +722,8 @@ export default SameDay;
 // FEATURE: Copy DPO link
 // FEATURE: Toast shown for every copy
 
-// TODO: Show warning if file tbas vs routed tbas has a high variance
 // TODO: Create multiple error severities: info, warn, error
 
-// TODO: Set up dynamic audit based on which data is present in the inputs
 // TODO: Dynamic tooltips on buttons to give more info
 // TODO: Add helpertext prop to textfield to show errors
 // TODO: Show warning when dropping file will overwrite values
