@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "scheduling-hub",
-    "version": "0.0.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
@@ -18,8 +18,25 @@
         "open": true
       },
       "fs": {
-        "all": true,
-        "scope": ["*"]
+        "all": false,
+        "copyFile": false,
+        "createDir": false,
+        "exists": false,
+        "readDir": false,
+        "readFile": true,
+        "removeDir": false,
+        "removeFile": false,
+        "renameFile": false,
+        "scope": ["*"],
+        "writeFile": true
+      },
+      "dialog": {
+        "all": false,
+        "ask": false,
+        "confirm": false,
+        "message": false,
+        "open": false,
+        "save": true
       }
     },
     "bundle": {

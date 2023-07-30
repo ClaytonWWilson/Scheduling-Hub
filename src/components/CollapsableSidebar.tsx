@@ -65,16 +65,6 @@ const Sidebar = (props: SidebarProps) => {
           selected={selected === "dcap"}
         />
         <CollapsableButton
-          icon={ThunderstormIcon}
-          collapsed={collapsed}
-          label="LMCP"
-          onClick={() => {
-            setSelected("lmcp");
-            props.onSelect("lmcp");
-          }}
-          selected={selected === "lmcp"}
-        />
-        <CollapsableButton
           icon={HandymanIcon}
           collapsed={collapsed}
           label="Tools"

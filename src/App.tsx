@@ -1,6 +1,5 @@
 import { useState } from "react";
 import CollapsableSidebar from "./components/CollapsableSidebar";
-import LMCP from "./components/pages/LMCP";
 import Settings from "./components/pages/Settings";
 import Tasks from "./components/pages/Tasks";
 import { AppSettings, Themes } from "./types/Settings";
@@ -47,7 +46,6 @@ function App() {
           }`}
         >
           <Tasks visible={page === "tasks"} />
-          <LMCP visible={page === "lmcp"} />
           <Settings
             visible={page === "settings"}
             settings={appSettings}

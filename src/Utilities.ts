@@ -65,7 +65,28 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
   return res;
 };
 
-const json2csv = (json: {}) => {};
+const json2csv = (
+  json: { [key: string]: string | number }[],
+  jsonToCsvHeadersMap: Map<string, string>
+) => {
+  const csvLines: string[] = [];
+
+  const jsonHeaders = [...jsonToCsvHeadersMap.keys()];
+  const csvHeaders = [...jsonToCsvHeadersMap.values()];
+  csvLines.push(csvHeaders.join());
+
+  const dataRows = json.map((element) => {
+    const rowItems = jsonHeaders.map((header) => {
+      return element[header];
+    });
+    return rowItems.join();
+  });
+
+  csvLines.push(...dataRows);
+
+  const rawCSV = csvLines.join("\n");
+  return rawCSV;
+};
 
 const isNumeric = (str: string, { ignoreCommas = false } = {}) => {
   if (typeof str != "string") return false; // we only process strings!
@@ -116,7 +137,7 @@ const isStationCodeValid = (stationCode: string) => {
 const percentChange = (initial: number, final: number) => {
   const difference = final - initial;
   const value = difference / Math.abs(initial);
-  return value * 100;
+  return Math.abs(value * 100);
 };
 
 const dateToSQLiteDateString = (date: Date) => {

@@ -46,4 +46,23 @@ type SameDayErrors = {
   routedTbaCount: string | undefined;
 };
 
-export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors };
+type LMCPData = {
+  source: string;
+  namespace: string;
+  type: string;
+  stationCode: string;
+  waveGroupName: string;
+  shipOptionCategory: string;
+  addressType: string;
+  packageType: string;
+  ofdDate: string;
+  ead: string;
+  cluster: string;
+  fulfillmentNetworkType: string;
+  volumeType: string;
+  week: number;
+  f: string;
+  value: number;
+};
+
+export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors, LMCPData };

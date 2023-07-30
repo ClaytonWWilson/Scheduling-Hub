@@ -10,12 +10,14 @@ import { invoke } from "@tauri-apps/api/tauri";
 
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 import AMXL from "../tasks/AMXL";
-import { AMXLData, SameDayData } from "../../types/Tasks";
+import { AMXLData, LMCPData, SameDayData } from "../../types/Tasks";
 import {
   QueryableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
+import LMCP from "../tasks/LMCP";
 import { enqueueSnackbar } from "notistack";
 
 type TaskProps = {
@@ -90,6 +92,8 @@ const Tasks = (props: TaskProps) => {
       });
   };
 
+  const LMCPCompletedHandler = () => {};
+
   const removeTask = (taskId: number) => {
     setCurrentTasks((prev) => {
       const newTaskList = prev.filter((task) => {
@@ -160,6 +164,30 @@ const Tasks = (props: TaskProps) => {
                   key={taskCounter}
                   taskId={taskCounter}
                   onComplete={amxlCompletedHandler}
+                  onCancel={taskCanceledHandler}
+                />,
+              ];
+              setTaskCounter((prevCounter) => {
+                return ++prevCounter;
+              });
+              return newTasks;
+            });
+          }}
+        />
+        <SpeedDialAction
+          key="LMCP"
+          icon={<ThunderstormIcon />}
+          tooltipTitle="LMCP"
+          tooltipOpen
+          onClick={() => {
+            setNewTaskOpen(false);
+            setCurrentTasks((prev) => {
+              const newTasks = [
+                ...prev,
+                <LMCP
+                  key={taskCounter}
+                  taskId={taskCounter}
+                  onComplete={LMCPCompletedHandler}
                   onCancel={taskCanceledHandler}
                 />,
               ];
