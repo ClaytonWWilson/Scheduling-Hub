@@ -211,7 +211,7 @@ const SameDay = (props: SameDayProps) => {
       userInputs.routingType == "samedaysunrise"
         ? "SAME_DAY_SUNRISE"
         : "SAME_DAY_AM"
-    }: Routing is complete.\nFile: **${
+    }: Routing completed.\nFile: **${
       validatedData.fileTbaCount
     }** TBAs // Routed: **${
       validatedData.routedTbaCount
@@ -430,14 +430,17 @@ const SameDay = (props: SameDayProps) => {
           autoComplete="aaaaa"
           aria-autocomplete="none"
           className="w-96"
-        ></TextField>
-        {/* <Autocomplete
-        // disablePortal
-        options={["DBO7", "DAU5", "DBM3"]}
-        renderInput={(params) => <TextField {...params} label="Station Code" />}
+        />
 
-        className="w-96"
-      /> */}
+        {/* <Autocomplete
+          disablePortal
+          freeSolo
+          options={["DBO7", "DAU5", "DBM3"]}
+          renderInput={(params) => (
+            <TextField {...params} label="Station Code" />
+          )}
+          className="w-96"
+        /> */}
         <Typography className="pl-2">Same Day Type:</Typography>
         <RadioGroup
           value={userInputs.routingType}
@@ -501,7 +504,7 @@ const SameDay = (props: SameDayProps) => {
           InputProps={{
             endAdornment: <InputAdornment position="end">%</InputAdornment>,
           }}
-        ></TextField>
+        />
         <TextField
           label="DPO Link"
           value={userInputs.dpoLink}
@@ -535,7 +538,7 @@ const SameDay = (props: SameDayProps) => {
           autoComplete="aaaaa"
           aria-autocomplete="none"
           className="w-96"
-        ></TextField>
+        />
         <div className="flex flex-row gap-x-2">
           <TextField
             label="TBAs routed"
@@ -575,7 +578,7 @@ const SameDay = (props: SameDayProps) => {
             autoComplete="aaaaa"
             aria-autocomplete="none"
             className="w-full"
-          ></TextField>
+          />
           <TextField
             label="# of generated routes"
             value={userInputs.routeCount}
@@ -609,7 +612,7 @@ const SameDay = (props: SameDayProps) => {
             autoComplete="aaaaa"
             aria-autocomplete="none"
             className="w-full"
-          ></TextField>
+          />
         </div>
         <div className="flex flex-row gap-x-2">
           <Typography className="pl-2">

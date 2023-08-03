@@ -9,10 +9,10 @@ import {
 import { invoke } from "@tauri-apps/api/tauri";
 
 import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+// import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
-import AMXL from "../tasks/AMXL";
-import { AMXLData, LMCPData, SameDayData } from "../../types/Tasks";
+// import AMXL from "../tasks/AMXL";
+import { AMXLData, LMCPExportableData, SameDayData } from "../../types/Tasks";
 import {
   QueryableSameDayRouteTask,
   QueryableStation,
@@ -150,7 +150,7 @@ const Tasks = (props: TaskProps) => {
             });
           }}
         />
-        <SpeedDialAction
+        {/* <SpeedDialAction
           key="AMXL"
           icon={<FitnessCenterIcon />}
           tooltipTitle="AMXL"
@@ -173,7 +173,7 @@ const Tasks = (props: TaskProps) => {
               return newTasks;
             });
           }}
-        />
+        /> */}
         <SpeedDialAction
           key="LMCP"
           icon={<ThunderstormIcon />}

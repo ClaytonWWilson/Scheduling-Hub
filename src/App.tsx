@@ -46,6 +46,8 @@ function App() {
           }`}
         >
           <Tasks visible={page === "tasks"} />
+          {page === "dcap" ? <div>Under construction 🧰</div> : null}
+          {page === "tools" ? <div>Nothing to see here 😧</div> : null}
           <Settings
             visible={page === "settings"}
             settings={appSettings}
