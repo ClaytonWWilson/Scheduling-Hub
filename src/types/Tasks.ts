@@ -46,23 +46,51 @@ type SameDayErrors = {
   routedTbaCount: string | undefined;
 };
 
-type LMCPData = {
-  source: string;
-  namespace: string;
-  type: string;
-  stationCode: string;
-  waveGroupName: string;
-  shipOptionCategory: string;
-  addressType: string;
-  packageType: string;
-  ofdDate: string;
-  ead: string;
-  cluster: string;
-  fulfillmentNetworkType: string;
-  volumeType: string;
-  week: number;
-  f: string;
-  value: number;
+type LMCPExportableData = {
+  source: string | undefined;
+  namespace: string | undefined;
+  type: string | undefined;
+  stationCode: string | undefined;
+  waveGroupName: string | undefined;
+  shipOptionCategory: string | undefined;
+  addressType: string | undefined;
+  packageType: string | undefined;
+  ofdDate: string | undefined;
+  ead: string | undefined;
+  cluster: string | undefined;
+  fulfillmentNetworkType: string | undefined;
+  volumeType: string | undefined;
+  week: number | undefined;
+  f: string | undefined;
+  value: number | undefined;
 };
 
-export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors, LMCPData };
+type LMCPTaskData = LMCPExportableData & {
+  requested: number | undefined;
+  currentLmcp: number | undefined;
+  currentAtrops: number | undefined;
+  pdr: number | undefined;
+  simLink: string | undefined;
+};
+
+type LMCPTaskErrors = {
+  stationCode: string | undefined;
+  ofdDate: string | undefined;
+  ead: string | undefined;
+  requested: string | undefined;
+  currentLmcp: string | undefined;
+  currentAtrops: string | undefined;
+  pdr: string | undefined;
+  simLink: string | undefined;
+  week: string | undefined;
+};
+
+export type {
+  AMXLData,
+  AMXLErrors,
+  SameDayData,
+  SameDayErrors,
+  LMCPExportableData,
+  LMCPTaskData,
+  LMCPTaskErrors,
+};

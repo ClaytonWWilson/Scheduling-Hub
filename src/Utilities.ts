@@ -66,7 +66,7 @@ const csv2json = (csv: string, options?: { headers?: boolean }) => {
 };
 
 const json2csv = (
-  json: { [key: string]: string | number }[],
+  json: { [key: string]: string | number | undefined }[],
   jsonToCsvHeadersMap: Map<string, string>
 ) => {
   const csvLines: string[] = [];
@@ -77,7 +77,11 @@ const json2csv = (
 
   const dataRows = json.map((element) => {
     const rowItems = jsonHeaders.map((header) => {
-      return element[header];
+      let item = element[header];
+      if (item === undefined) {
+        item = "";
+      }
+      return item;
     });
     return rowItems.join();
   });
@@ -150,6 +154,35 @@ const dateToSQLiteDateString = (date: Date) => {
   return dateString;
 };
 
+const objectHasUndefinedValue = (obj: { [key: string]: any }) => {
+  const values = Object.values(obj);
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] === undefined) {
+      return false;
+    }
+  }
+  return true;
+};
+
+const objectHasDefinedValue = (obj: { [key: string]: any }) => {
+  const values = Object.values(obj);
+  for (let i = 0; i < values.length; i++) {
+    if (values[i]) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const isSimLinkValid = (simLink: string) => {
+  const simLinkRegex = /^https:\/\/sim\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g;
+  if (simLink.match(simLinkRegex) === null) {
+    return false;
+  }
+
+  return true;
+};
+
 export type { CSVDecodedRow };
 export {
   csv2json,
@@ -160,4 +193,7 @@ export {
   isNumeric,
   percentChange,
   dateToSQLiteDateString,
+  objectHasUndefinedValue,
+  objectHasDefinedValue,
+  isSimLinkValid,
 };
