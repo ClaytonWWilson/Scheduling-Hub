@@ -1,7 +1,14 @@
 import React, { useState } from "react";
+import { fromZodError } from "zod-validation-error";
 import SameDay from "../tasks/SameDay";
 import {
   Backdrop,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   SpeedDial,
   SpeedDialAction,
   SpeedDialIcon,
@@ -12,14 +19,14 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 // import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 // import AMXL from "../tasks/AMXL";
-import { AMXLData, LMCPExportableData, SameDayData } from "../../types/Tasks";
+import { AMXLData, DialogInfo, SameDayData } from "../../types/Tasks";
 import {
   QueryableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
 import LMCP from "../tasks/LMCP";
 import { enqueueSnackbar } from "notistack";
-
+import { ZodError } from "zod";
 type TaskProps = {
   visible: boolean;
 };
@@ -28,9 +35,21 @@ const Tasks = (props: TaskProps) => {
   const [newTaskOpen, setNewTaskOpen] = useState(false);
   const [currentTasks, setCurrentTasks] = useState<JSX.Element[]>([]);
   const [taskCounter, setTaskCounter] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogInfo, setDialogInfo] = useState<DialogInfo | undefined>();
 
   const taskCanceledHandler = (taskId: number) => {
-    removeTask(taskId);
+    const dialog: DialogInfo = {
+      title: "Close Task in progress?",
+      message:
+        "You've already started this task, closing it out now will erase all of it's data. Are you sure?",
+      options: "YesNo",
+      onConfirm: () => {
+        removeTask(taskId);
+      },
+    };
+
+    showDialog(dialog);
   };
 
   const amxlCompletedHandler = () => {};
@@ -55,41 +74,70 @@ const Tasks = (props: TaskProps) => {
     if (data.endTime === undefined) errorMessage += "End Time is undefined.\n";
 
     if (errorMessage !== "") {
-      // TODO: Show error dialog
       console.error(errorMessage);
+
+      const dialog: DialogInfo = {
+        title: "Error",
+        message: `An error occurred when trying to save this task: \n${errorMessage}}\nDo you want to continue closing this task without saving?`,
+        options: "YesNo",
+        error: true,
+        onConfirm: () => {
+          removeTask(taskId);
+          enqueueSnackbar("Same Day task closed", { variant: "error" });
+        },
+      };
+
+      showDialog(dialog);
       return;
     }
 
+    const dialog: DialogInfo = {
+      title: "Complete task?",
+      message: "Are you ready to mark this task as completed?",
+      options: "YesNo",
+      onConfirm: () => {
+        saveTaskToDatabase(data)
+          .then((res) => {
+            console.log(res);
+            removeTask(taskId);
+            enqueueSnackbar("Same Day task completed", { variant: "success" });
+          })
+          .catch((err) => {
+            console.error(err);
+            const dialog: DialogInfo = {
+              title: "Error",
+              message: `An error occurred when trying to save this task: \n${err}}`,
+              error: true,
+              options: "Ok",
+            };
+            showDialog(dialog);
+          });
+      },
+    };
+    showDialog(dialog);
+  };
+
+  const saveTaskToDatabase = async (data: SameDayData) => {
     const insertableStation: QueryableStation = {
       stationCode: data.stationCode as string,
     };
 
-    invoke("insert_station", insertableStation)
-      .then(() => {
-        const insertableTaskData: QueryableSameDayRouteTask = {
-          stationCode: data.stationCode as string,
-          startTime: data.startTime as string,
-          tbaSubmittedCount: data.fileTbaCount,
-          dpoCompleteTime: data.dpoCompleteTime as string,
-          endTime: data.endTime as string,
-          sameDayType: data.routingType as string,
-          bufferPercent: data.bufferPercent as number,
-          dpoLink: data.dpoLink as string,
-          tbaRoutedCount: data.routedTbaCount as number,
-          routeCount: data.routeCount as number,
-        };
+    return invoke("insert_station", insertableStation).then(() => {
+      const insertableTaskData: QueryableSameDayRouteTask = {
+        stationCode: data.stationCode as string,
+        startTime: data.startTime as string,
+        tbaSubmittedCount: data.fileTbaCount,
+        dpoCompleteTime: data.dpoCompleteTime as string,
+        endTime: data.endTime as string,
+        sameDayType: data.routingType as string,
+        bufferPercent: data.bufferPercent as number,
+        dpoLink: data.dpoLink as string,
+        tbaRoutedCount: data.routedTbaCount as number,
+        routeCount: data.routeCount as number,
+      };
 
-        return invoke("insert_same_day_task", insertableTaskData);
-      })
-      .then((res) => {
-        console.log(res);
-        removeTask(taskId);
-        enqueueSnackbar("Same Day task completed", { variant: "success" });
-      })
-      .catch((err) => {
-        console.error(err);
-        // TODO: Show error dialog
-      });
+      return invoke("insert_same_day_task", insertableTaskData);
+    });
   };
 
   const LMCPCompletedHandler = () => {};
@@ -104,12 +152,88 @@ const Tasks = (props: TaskProps) => {
     });
   };
 
+  const showDialog = (dialogInfo: DialogInfo) => {
+    let parsedInfo: DialogInfo;
+    try {
+      parsedInfo = DialogInfo.parse(dialogInfo);
+    } catch (zError) {
+      const readableError = fromZodError(zError as ZodError);
+      console.log(readableError);
+      return;
+    }
+
+    setDialogInfo(parsedInfo);
+    setDialogOpen(true);
+  };
+
   return (
     <div
       className={`h-full w-full px-2 flex gap-4 flex-wrap transition-all ${
         !props.visible ? "hidden" : ""
       }`}
     >
+      <Dialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+          if (dialogInfo?.onCancel) {
+            dialogInfo.onCancel();
+          }
+        }}
+      >
+        <DialogTitle>{dialogInfo?.title}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{dialogInfo?.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          {dialogInfo?.options === "YesNo" ? (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                autoFocus
+                onClick={() => {
+                  setDialogOpen(false);
+                  if (dialogInfo?.onCancel) {
+                    dialogInfo.onCancel();
+                  }
+                }}
+              >
+                No
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => {
+                  setDialogOpen(false);
+                  if (dialogInfo?.onConfirm) {
+                    dialogInfo.onConfirm();
+                  }
+                }}
+              >
+                Yes
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="outlined"
+                color="primary"
+                autoFocus
+                onClick={() => {
+                  setDialogOpen(false);
+                  if (dialogInfo?.onConfirm) {
+                    dialogInfo.onConfirm();
+                  }
+                }}
+              >
+                Ok
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+
       <Backdrop className="z-10" open={newTaskOpen} />
       {currentTasks}
 
@@ -205,4 +329,5 @@ const Tasks = (props: TaskProps) => {
 
 export default Tasks;
 
-// TODO: Confirm before closing or canceling task
+// TODO: validate input forms with zod. Optional textfield values can be created with
+// const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);

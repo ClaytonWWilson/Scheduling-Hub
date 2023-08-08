@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 type AMXLData = {
   stationCode: string;
   startTime: Date | null;
@@ -85,6 +87,25 @@ type LMCPTaskErrors = {
   week: string | undefined;
 };
 
+const DialogInfo = z.object({
+  title: z.string(),
+  message: z.string(),
+  error: z.boolean().default(false).optional(),
+  options: z.union([z.literal("YesNo"), z.literal("Ok")]),
+  onConfirm: z
+    .function()
+    .returns(z.void())
+    .optional()
+    .describe("The function ran when the Yes button is clicked"),
+  onCancel: z
+    .function()
+    .returns(z.void())
+    .optional()
+    .describe("The function ran when the No button is clicked"),
+});
+
+type DialogInfo = z.infer<typeof DialogInfo>;
+
 export type {
   AMXLData,
   AMXLErrors,
@@ -94,3 +115,5 @@ export type {
   LMCPTaskData,
   LMCPTaskErrors,
 };
+
+export { DialogInfo };
