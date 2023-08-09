@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { LMCPTaskData } from "./Tasks";
+
 type QueryableStation = {
   stationCode: string;
 };
@@ -16,4 +19,14 @@ type QueryableSameDayRouteTask = {
   routeCount: number;
 };
 
+const QueryableLMCPTask = LMCPTaskData.merge(
+  z.object({
+    id: z.number().positive().optional(),
+  })
+);
+
+type QueryableLMCPTask = z.infer<typeof QueryableLMCPTask>;
+
 export type { QueryableStation, QueryableSameDayRouteTask };
+
+export { QueryableLMCPTask };

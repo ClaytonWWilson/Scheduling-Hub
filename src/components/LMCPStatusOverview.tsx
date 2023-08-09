@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Typography } from "@mui/material";
 import { z } from "zod";
 
@@ -18,11 +18,19 @@ const LMCPApprovalStatus = z.enum([
 type LMCPApprovalStatus = z.infer<typeof LMCPApprovalStatus>;
 
 const getNewIntakeString = (requested: number, pdr: number) => {
-  if (requested === 0) return "???";
-
   const newIntake = requested - pdr;
   if (Number.isNaN(newIntake)) return "???";
   return newIntake.toString();
+};
+
+const getNewIntakeColor = (requested: number, pdr: number) => {
+  const newIntake = requested - pdr;
+
+  if (newIntake < 0) {
+    return "text-red-500";
+  } else {
+    return "";
+  }
 };
 
 const getApprovalStatusColor = (status: LMCPApprovalStatus) => {
@@ -44,8 +52,6 @@ const getApprovalStatus = (
   currentAtrops: number
 ): LMCPApprovalStatus => {
   const percent = getAdjustmentPercent(requested, currentLmcp, currentAtrops);
-
-  if (Number.isNaN(percent)) return LMCPApprovalStatus.enum.unknown;
 
   if (percent <= 5) {
     return LMCPApprovalStatus.enum.auto_approved;
@@ -88,8 +94,6 @@ const getDeltaString = (
 ): string => {
   const percent = getAdjustmentPercent(requested, currentLmcp, currentAtrops);
 
-  if (Number.isNaN(percent)) return "???";
-
   if (percent > 100) {
     return "> 100%";
   } else if (percent < -100) {
@@ -103,8 +107,6 @@ const getLargerSourceString = (
   currentLmcp: number,
   currentAtrops: number
 ): string => {
-  if (currentLmcp === 0 || currentAtrops === 0) return "???";
-
   if (currentLmcp > currentAtrops) {
     return "LMCP";
   } else {
@@ -113,38 +115,82 @@ const getLargerSourceString = (
 };
 
 const LMCPStatusOverview = (props: LMCPStatusProps) => {
+  const [valuesDisplayable, setValuesDisplayable] = useState(false);
+
+  useEffect(() => {
+    if (
+      props.requested <= 0 ||
+      props.currentLmcp <= 0 ||
+      props.currentAtrops <= 0 ||
+      props.pdr < 0
+    ) {
+      setValuesDisplayable(false);
+    } else {
+      setValuesDisplayable(true);
+    }
+  }, [props.requested, props.pdr, props.currentAtrops, props.currentAtrops]);
+
   return (
     <>
-      <Typography align="center">{`New LMCP: ${getNewIntakeString(
+      <Typography
+        className={`${getNewIntakeColor(props.requested, props.pdr)}`}
+        align="center"
+      >{`New LMCP: ${getNewIntakeString(
         props.requested,
         props.pdr
       )}`}</Typography>
       <div className="grid grid-cols-3">
         <Typography
-          className={`${getApprovalStatusColor(
-            getApprovalStatus(
-              props.requested,
-              props.currentLmcp,
-              props.currentAtrops
-            )
-          )}`}
+          className={`${
+            valuesDisplayable
+              ? getApprovalStatusColor(
+                  getApprovalStatus(
+                    props.requested,
+                    props.currentLmcp,
+                    props.currentAtrops
+                  )
+                )
+              : ""
+          }`}
           align="center"
-        >{`Status: ${getApprovalStatusString(
-          getApprovalStatus(
-            props.requested,
-            props.currentLmcp,
-            props.currentAtrops
-          )
-        )}`}</Typography>
-        <Typography align="center">{`Delta: ${getDeltaString(
-          props.requested,
-          props.currentLmcp,
-          props.currentAtrops
-        )}`}</Typography>
-        <Typography align="center">{`Using: ${getLargerSourceString(
-          props.currentLmcp,
-          props.currentAtrops
-        )}`}</Typography>
+        >{`Status: ${
+          valuesDisplayable
+            ? getApprovalStatusString(
+                getApprovalStatus(
+                  props.requested,
+                  props.currentLmcp,
+                  props.currentAtrops
+                )
+              )
+            : "???"
+        }`}</Typography>
+        <Typography
+          className={`${
+            valuesDisplayable
+              ? getApprovalStatusColor(
+                  getApprovalStatus(
+                    props.requested,
+                    props.currentLmcp,
+                    props.currentAtrops
+                  )
+                )
+              : ""
+          }`}
+          align="center"
+        >{`Delta: ${
+          valuesDisplayable
+            ? getDeltaString(
+                props.requested,
+                props.currentLmcp,
+                props.currentAtrops
+              )
+            : "???"
+        }`}</Typography>
+        <Typography align="center">{`Using: ${
+          valuesDisplayable
+            ? getLargerSourceString(props.currentLmcp, props.currentAtrops)
+            : "???"
+        }`}</Typography>
       </div>
     </>
   );

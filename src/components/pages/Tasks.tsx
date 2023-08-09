@@ -19,7 +19,12 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 // import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 // import AMXL from "../tasks/AMXL";
-import { AMXLData, DialogInfo, SameDayData } from "../../types/Tasks";
+import {
+  AMXLData,
+  DialogInfo,
+  LMCPExportableData,
+  SameDayData,
+} from "../../types/Tasks";
 import {
   QueryableSameDayRouteTask,
   QueryableStation,
@@ -88,7 +93,6 @@ const Tasks = (props: TaskProps) => {
       };
 
       showDialog(dialog);
-      return;
     }
 
     const dialog: DialogInfo = {
@@ -96,7 +100,7 @@ const Tasks = (props: TaskProps) => {
       message: "Are you ready to mark this task as completed?",
       options: "YesNo",
       onConfirm: () => {
-        saveTaskToDatabase(data)
+        saveSameDayTaskToDatabase(data)
           .then((res) => {
             console.log(res);
             removeTask(taskId);
@@ -117,12 +121,16 @@ const Tasks = (props: TaskProps) => {
     showDialog(dialog);
   };
 
-  const saveTaskToDatabase = async (data: SameDayData) => {
+  const saveStationToDatabase = async (station: QueryableStation) => {
+    return invoke("insert_station", station);
+  };
+
+  const saveSameDayTaskToDatabase = async (data: SameDayData) => {
     const insertableStation: QueryableStation = {
       stationCode: data.stationCode as string,
     };
 
-    return invoke("insert_station", insertableStation).then(() => {
+    return saveStationToDatabase(insertableStation).then(() => {
       const insertableTaskData: QueryableSameDayRouteTask = {
         stationCode: data.stationCode as string,
         startTime: data.startTime as string,
@@ -140,7 +148,43 @@ const Tasks = (props: TaskProps) => {
     });
   };
 
-  const LMCPCompletedHandler = () => {};
+  const saveLMCPTaskToDatabase = async (data: LMCPExportableData) => {
+    const insertableStation: QueryableStation = {
+      stationCode: data.stationCode,
+    };
+
+    saveStationToDatabase(insertableStation).then(() =>
+      console.log("Finish this...")
+    );
+  };
+
+  const LMCPCompletedHandler = (taskId: number, data: LMCPExportableData) => {
+    const dialog: DialogInfo = {
+      title: "Complete task?",
+      message: "Are you ready to mark this task as completed?",
+      options: "YesNo",
+      onConfirm: () => {
+        // saveSameDayTaskToDatabase(data)
+        //   .then((res) => {
+        //     console.log(res);
+        //     removeTask(taskId);
+        //     enqueueSnackbar("Same Day task completed", { variant: "success" });
+        //   })
+        //   .catch((err) => {
+        //     console.error(err);
+        //     const dialog: DialogInfo = {
+        //       title: "Error",
+        //       message: `An error occurred when trying to save this task: \n${err}}`,
+        //       error: true,
+        //       options: "Ok",
+        //     };
+        //     showDialog(dialog);
+        //   });
+      },
+    };
+    showDialog(dialog);
+    console.log(data);
+  };
 
   const removeTask = (taskId: number) => {
     setCurrentTasks((prev) => {
@@ -313,6 +357,7 @@ const Tasks = (props: TaskProps) => {
                   taskId={taskCounter}
                   onComplete={LMCPCompletedHandler}
                   onCancel={taskCanceledHandler}
+                  onShowDialog={showDialog}
                 />,
               ];
               setTaskCounter((prevCounter) => {

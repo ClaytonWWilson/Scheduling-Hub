@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ZodError, z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
+  DialogInfo,
   LMCPExportableData,
   LMCPInputs,
   LMCPTaskData,
@@ -27,17 +28,17 @@ import {
   getTimezoneAdjustedDate,
   json2csv,
   noAutocomplete,
-  objectHasDefinedValue,
-  objectHasUndefinedValue,
 } from "../../Utilities";
 import { format } from "date-fns";
 import { save } from "@tauri-apps/api/dialog";
 import { writeTextFile } from "@tauri-apps/api/fs";
 import LMCPStatusOverview from "../LMCPStatusOverview";
+import { enqueueSnackbar } from "notistack";
 
 type LMCPProps = {
   onCancel: (taskId: number) => void;
   onComplete: (taskId: number, data: LMCPExportableData) => void;
+  onShowDialog: (dialogInfo: DialogInfo) => void;
   taskId: number;
 };
 
@@ -64,6 +65,24 @@ const emptyRequest = (): LMCPInputs => {
     pdr: "",
     simLink: "",
   };
+};
+
+const parseLMCPInputs = (currentData: LMCPInputs) => {
+  const temp = { ...currentData };
+
+  // Coerce to numbers. Ensures that commas in a number string dont invalidate it.
+  // @ts-ignore
+  temp.requested = coerceToNumber(temp.requested);
+  // @ts-ignore
+  temp.pdr = coerceToNumber(temp.pdr);
+  // @ts-ignore
+  temp.currentLmcp = coerceToNumber(temp.currentLmcp);
+  // @ts-ignore
+  temp.currentAtrops = coerceToNumber(temp.currentAtrops);
+  // @ts-ignore
+  temp.value = temp.requested - temp.pdr;
+
+  return LMCPTaskData.safeParse(temp);
 };
 
 const LMCP = (props: LMCPProps) => {
@@ -210,32 +229,36 @@ const LMCP = (props: LMCPProps) => {
         return writeTextFile({ path: path, contents: csvData });
       })
       .then((writeResult) => {
-        console.log(writeResult);
+        // null == completed, undefined == cancelled/errored
+        if (writeResult === null) {
+          enqueueSnackbar("File saved", {
+            variant: "success",
+          });
+        } else {
+          enqueueSnackbar("Export failed", {
+            variant: "error",
+          });
+        }
       })
       .catch((err) => {
         console.log(err);
       });
   };
 
+  const getWarRoomBlurb = () => {
+    const blurb = `(${currentRequest.simLink})
+Site: ${currentRequest.stationCode}
+Requesting: ${currentRequest.requested}
+LMCP: ${currentRequest.currentLmcp}
+Atrops: ${currentRequest.currentAtrops}
+Reason: `;
+
+    return blurb;
+  };
+
   const validateInputData = () => {
-    const temp = { ...currentRequest };
-
-    // Coerce to numbers. Ensures that commas in a number string dont invalidate it.
-    // @ts-ignore
-    temp.requested = coerceToNumber(temp.requested);
-    // @ts-ignore
-    temp.pdr = coerceToNumber(temp.pdr);
-    // @ts-ignore
-    temp.currentLmcp = coerceToNumber(temp.currentLmcp);
-    // @ts-ignore
-    temp.currentAtrops = coerceToNumber(temp.currentAtrops);
-    // @ts-ignore
-    temp.value = temp.requested - temp.pdr;
-
-    const res = LMCPTaskData.safeParse(temp);
-
+    const res = parseLMCPInputs(currentRequest);
     if (res.success) {
-      console.log("YAY");
       setErrors({});
     } else {
       mapErrorsToState(res.error.errors);
@@ -276,7 +299,6 @@ const LMCP = (props: LMCPProps) => {
             LMCP Adjustment
           </Typography>
         </div>
-        {/* BUG: Manually typing does not trigger onchange */}
         <Autocomplete
           options={[...importedRequests.keys()]}
           value={currentRequest.stationCode}
@@ -295,10 +317,19 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, stationCode };
                 });
               }}
+              error={
+                errors.stationCode !== undefined &&
+                currentRequest.stationCode !== ""
+              }
             />
           )}
           onChange={(_, stationCode) => {
-            if (!stationCode) return;
+            if (!stationCode) {
+              setCurrentRequest((prev) => {
+                return { ...prev, stationCode: "" };
+              });
+              return;
+            }
 
             const temp = importedRequests.get(stationCode);
             let nextRequest: LMCPInputs;
@@ -360,7 +391,9 @@ const LMCP = (props: LMCPProps) => {
             className="w-full"
             value={currentRequest.currentLmcp}
             onChange={(e) => {
-              const current = e.target.value;
+              const current = e.target.value
+                .replaceAll(",", "")
+                .replaceAll(" ", "");
 
               setCurrentRequest((prevSelected) => {
                 const updatedSelected = {
@@ -371,6 +404,10 @@ const LMCP = (props: LMCPProps) => {
                 return updatedSelected;
               });
             }}
+            error={
+              errors.currentLmcp !== undefined &&
+              currentRequest.currentLmcp !== ""
+            }
           />
           <TextField
             label="Current ATROPS"
@@ -379,12 +416,18 @@ const LMCP = (props: LMCPProps) => {
             className="w-full"
             value={currentRequest.currentAtrops}
             onChange={(e) => {
-              const atrops = e.target.value;
+              const atrops = e.target.value
+                .replaceAll(",", "")
+                .replaceAll(" ", "");
 
               setCurrentRequest((prevSelected) => {
                 return { ...prevSelected, currentAtrops: atrops };
               });
             }}
+            error={
+              errors.currentAtrops !== undefined &&
+              currentRequest.currentAtrops !== ""
+            }
           />
         </div>
         <div className="flex flex-row gap-x-2">
@@ -395,12 +438,15 @@ const LMCP = (props: LMCPProps) => {
             className="w-full"
             value={currentRequest.pdr}
             onChange={(e) => {
-              const pdr = e.target.value;
+              const pdr = e.target.value
+                .replaceAll(",", "")
+                .replaceAll(" ", "");
 
               setCurrentRequest((prevSelected) => {
                 return { ...prevSelected, pdr: pdr };
               });
             }}
+            error={errors.pdr !== undefined && currentRequest.pdr !== ""}
           />
 
           <TextField
@@ -410,12 +456,17 @@ const LMCP = (props: LMCPProps) => {
             className="w-full"
             value={currentRequest.requested}
             onChange={(e) => {
-              const requested = e.target.value;
+              const requested = e.target.value
+                .replaceAll(",", "")
+                .replaceAll(" ", "");
 
               setCurrentRequest((prevSelected) => {
                 return { ...prevSelected, requested: requested };
               });
             }}
+            error={
+              errors.requested !== undefined && currentRequest.requested !== ""
+            }
           />
         </div>
         <div className="flex flex-row gap-x-2">
@@ -432,6 +483,9 @@ const LMCP = (props: LMCPProps) => {
                 return { ...prevSelected, simLink: simLink };
               });
             }}
+            error={
+              errors.simLink !== undefined && currentRequest.simLink !== ""
+            }
           />
         </div>
         <div>
@@ -465,6 +519,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, waveGroupName };
                 });
               }}
+              error={
+                errors.waveGroupName !== undefined &&
+                currentRequest.waveGroupName !== ""
+              }
             />
             <TextField
               label="Week"
@@ -473,11 +531,15 @@ const LMCP = (props: LMCPProps) => {
               className="w-full"
               value={currentRequest.week}
               onChange={(e) => {
-                const week = e.target.value;
+                const week = e.target.value
+                  .replaceAll(",", "")
+                  .replaceAll(" ", "");
+
                 setCurrentRequest((prev) => {
                   return { ...prev, week };
                 });
               }}
+              error={errors.week !== undefined && currentRequest.week !== ""}
             />
           </div>
 
@@ -494,6 +556,9 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, source };
                 });
               }}
+              error={
+                errors.source !== undefined && currentRequest.source !== ""
+              }
             />
             <TextField
               label="Namespace"
@@ -507,6 +572,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, namespace };
                 });
               }}
+              error={
+                errors.namespace !== undefined &&
+                currentRequest.namespace !== ""
+              }
             />
             <TextField
               label="Type"
@@ -520,6 +589,7 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, type };
                 });
               }}
+              error={errors.type !== undefined && currentRequest.type !== ""}
             />
           </div>
           <div className="flex flex-row gap-x-2">
@@ -535,6 +605,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, shipOptionCategory };
                 });
               }}
+              error={
+                errors.shipOptionCategory !== undefined &&
+                currentRequest.shipOptionCategory !== ""
+              }
             />
             <TextField
               label="Address Type"
@@ -548,6 +622,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, addressType };
                 });
               }}
+              error={
+                errors.addressType !== undefined &&
+                currentRequest.addressType !== ""
+              }
             />
           </div>
           <div className="flex flex-row gap-x-2">
@@ -563,6 +641,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, packageType };
                 });
               }}
+              error={
+                errors.packageType !== undefined &&
+                currentRequest.packageType !== ""
+              }
             />
             <TextField
               label="Volume Type"
@@ -576,6 +658,10 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, volumeType };
                 });
               }}
+              error={
+                errors.volumeType !== undefined &&
+                currentRequest.volumeType !== ""
+              }
             />
           </div>
           <div className="flex flex-row gap-x-2">
@@ -591,6 +677,9 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, cluster };
                 });
               }}
+              error={
+                errors.cluster !== undefined && currentRequest.cluster !== ""
+              }
             />
             <TextField
               label="f"
@@ -604,6 +693,7 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, f };
                 });
               }}
+              error={errors.f !== undefined && currentRequest.f !== ""}
             />
           </div>
           <div className="flex flex-row gap-x-2">
@@ -619,17 +709,62 @@ const LMCP = (props: LMCPProps) => {
                   return { ...prev, fulfillmentNetworkType };
                 });
               }}
+              error={
+                errors.fulfillmentNetworkType !== undefined &&
+                currentRequest.fulfillmentNetworkType !== ""
+              }
             />
           </div>
         </div>
 
         <div className="w-96 flex flex-row gap-x-2">
-          <Button variant="outlined" onClick={exportHandler}>
+          <Button
+            onClick={() => {
+              exportHandler();
+            }}
+            variant="outlined"
+            disabled={Object.keys(errors).length > 0}
+          >
             Export
           </Button>
-          <Button variant="outlined">Blurb</Button>
+          <Button
+            onClick={() => {
+              navigator.clipboard.writeText(getWarRoomBlurb());
+              enqueueSnackbar("War Room blurb copied", {
+                variant: "success",
+              });
+            }}
+            variant="outlined"
+            disabled={Object.keys(errors).length > 0}
+          >
+            Blurb
+          </Button>
           <div className="ml-auto">
-            <Button variant="contained" onClick={() => {}} disabled>
+            <Button
+              onClick={() => {
+                const res = parseLMCPInputs(currentRequest);
+
+                if (res.success) {
+                  props.onComplete(props.taskId, res.data);
+                } else {
+                  // Should never occur since the button shouldn't be clickable
+                  const dialog: DialogInfo = {
+                    title:
+                      "The following error(s) occurred while trying to close",
+                    message: `${
+                      fromZodError(res.error).message
+                    }\nDo you want to continue closing without saving?`,
+                    options: "YesNo",
+                    onConfirm: () => {
+                      props.onCancel(props.taskId);
+                    },
+                  };
+                  props.onShowDialog(dialog);
+                }
+              }}
+              variant="contained"
+              disabled={Object.keys(errors).length > 0}
+            >
               Complete Task
             </Button>
           </div>
