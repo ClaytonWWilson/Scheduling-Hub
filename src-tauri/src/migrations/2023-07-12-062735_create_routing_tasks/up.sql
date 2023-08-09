@@ -16,9 +16,3 @@ create table same_day_route_task (
   route_count integer not null,
   foreign key(station_code) references station (station_code)
 );
-
--- create table amxl_route_task (
---   id integer not null primary key,
---   station_code text not null,
---   foreign key (station_code) references stations (station_code)
--- );
