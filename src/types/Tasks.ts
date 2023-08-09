@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import { z } from "zod";
 
 type AMXLData = {
@@ -48,44 +49,107 @@ type SameDayErrors = {
   routedTbaCount: string | undefined;
 };
 
-type LMCPExportableData = {
-  source: string | undefined;
-  namespace: string | undefined;
-  type: string | undefined;
-  stationCode: string | undefined;
-  waveGroupName: string | undefined;
-  shipOptionCategory: string | undefined;
-  addressType: string | undefined;
-  packageType: string | undefined;
-  ofdDate: string | undefined;
-  ead: string | undefined;
-  cluster: string | undefined;
-  fulfillmentNetworkType: string | undefined;
-  volumeType: string | undefined;
-  week: number | undefined;
-  f: string | undefined;
-  value: number | undefined;
-};
+const LMCPExportableData = z.object({
+  source: z.string(),
+  namespace: z.string(),
+  type: z.string(),
+  stationCode: z.string().regex(/^[A-Z]{3}[1-9]{1}$/, "Invalid Station Code"),
+  waveGroupName: z.string(),
+  shipOptionCategory: z.string(),
+  addressType: z.string(),
+  packageType: z.string(),
+  ofdDate: z.coerce.date().transform((date) => format(date, "yyyy-MM-dd")),
+  ead: z.coerce.date().transform((date) => format(date, "yyyy-MM-dd")),
+  cluster: z.string(),
+  fulfillmentNetworkType: z.string(),
+  volumeType: z.string(),
+  week: z.coerce
+    .number({ invalid_type_error: "Must be a number" })
+    .min(0, "Cannot be negative")
+    .max(53, "Cannot be > 53"),
+  f: z.string(),
+  value: z
+    .number({ invalid_type_error: "Must be a number" })
+    .min(0, "Cannot be negative"),
+});
 
-type LMCPTaskData = LMCPExportableData & {
-  requested: number | undefined;
-  currentLmcp: number | undefined;
-  currentAtrops: number | undefined;
-  pdr: number | undefined;
-  simLink: string | undefined;
-};
+type LMCPExportableData = z.infer<typeof LMCPExportableData>;
 
-type LMCPTaskErrors = {
-  stationCode: string | undefined;
-  ofdDate: string | undefined;
-  ead: string | undefined;
-  requested: string | undefined;
-  currentLmcp: string | undefined;
-  currentAtrops: string | undefined;
-  pdr: string | undefined;
-  simLink: string | undefined;
-  week: string | undefined;
-};
+const LMCPTaskData = LMCPExportableData.merge(
+  z.object({
+    requested: z.coerce
+      .number({ invalid_type_error: "Must be a number" })
+      .min(0, "Cannot be negative"),
+    currentLmcp: z.coerce
+      .number({ invalid_type_error: "Must be a number" })
+      .min(0, "Cannot be negative"),
+    currentAtrops: z.coerce
+      .number({ invalid_type_error: "Must be a number" })
+      .min(0, "Cannot be negative"),
+    pdr: z.coerce
+      .number({ invalid_type_error: "Must be a number" })
+      .min(0, "Cannot be negative"),
+    simLink: z
+      .string()
+      .regex(
+        /^https:\/\/sim\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g,
+        "Invalid SIM link"
+      ),
+  })
+);
+
+type LMCPTaskData = z.infer<typeof LMCPTaskData>;
+
+const LMCPInputs = z.object({
+  source: z.string(),
+  namespace: z.string(),
+  type: z.string(),
+  stationCode: z.string(),
+  waveGroupName: z.string(),
+  shipOptionCategory: z.string(),
+  addressType: z.string(),
+  packageType: z.string(),
+  ofdDate: z.union([z.coerce.date(), z.literal("")]),
+  ead: z.union([z.coerce.date(), z.literal("")]),
+  cluster: z.string(),
+  fulfillmentNetworkType: z.string(),
+  volumeType: z.string(),
+  week: z.string(),
+  f: z.string(),
+  requested: z.string(),
+  currentLmcp: z.string(),
+  currentAtrops: z.string(),
+  pdr: z.string(),
+  simLink: z.string(),
+});
+
+type LMCPInputs = z.infer<typeof LMCPInputs>;
+
+const LMCPTaskErrors = z.object({
+  stationCode: z.union([z.string(), z.undefined()]),
+  ofdDate: z.union([z.string(), z.undefined()]),
+  ead: z.union([z.string(), z.undefined()]),
+  source: z.union([z.string(), z.undefined()]),
+  namespace: z.union([z.string(), z.undefined()]),
+  type: z.union([z.string(), z.undefined()]),
+  waveGroupName: z.union([z.string(), z.undefined()]),
+  shipOptionCategory: z.union([z.string(), z.undefined()]),
+  addressType: z.union([z.string(), z.undefined()]),
+  packageType: z.union([z.string(), z.undefined()]),
+  cluster: z.union([z.string(), z.undefined()]),
+  fulfillmentNetworkType: z.union([z.string(), z.undefined()]),
+  volumeType: z.union([z.string(), z.undefined()]),
+  f: z.union([z.string(), z.undefined()]),
+  value: z.union([z.string(), z.undefined()]),
+  requested: z.union([z.string(), z.undefined()]),
+  currentLmcp: z.union([z.string(), z.undefined()]),
+  currentAtrops: z.union([z.string(), z.undefined()]),
+  pdr: z.union([z.string(), z.undefined()]),
+  simLink: z.union([z.string(), z.undefined()]),
+  week: z.union([z.string(), z.undefined()]),
+});
+
+type LMCPTaskErrors = z.infer<typeof LMCPTaskErrors>;
 
 const DialogInfo = z.object({
   title: z.string(),
@@ -106,14 +170,12 @@ const DialogInfo = z.object({
 
 type DialogInfo = z.infer<typeof DialogInfo>;
 
-export type {
-  AMXLData,
-  AMXLErrors,
-  SameDayData,
-  SameDayErrors,
-  LMCPExportableData,
+export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors };
+
+export {
+  DialogInfo,
   LMCPTaskData,
   LMCPTaskErrors,
+  LMCPInputs,
+  LMCPExportableData,
 };
-
-export { DialogInfo };

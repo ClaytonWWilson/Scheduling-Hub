@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { z } from "zod";
 
 type CSVDecodedRow = {
   [header: string]: string | undefined;
@@ -107,11 +108,6 @@ const isNumeric = (str: string, { ignoreCommas = false } = {}) => {
   );
 };
 
-const coerceStringToInteger = (str: string) => {
-  str = str.replaceAll(",", "").trim();
-  return parseInt(str);
-};
-
 const isDpoLinkValid = (link: string, stationCode: string) => {
   if (
     link.match(
@@ -132,6 +128,21 @@ const isDpoLinkValid = (link: string, stationCode: string) => {
     return false;
   }
   return true;
+};
+
+const coerceToNumber = (val: any) => {
+  try {
+    val = val.replaceAll(",", "");
+  } catch (error) {}
+  const numberSchema = z.coerce.number();
+
+  const res = numberSchema.safeParse(val);
+
+  if (res.success) {
+    return res.data;
+  } else {
+    return NaN;
+  }
 };
 
 const isStationCodeValid = (stationCode: string) => {
@@ -183,14 +194,23 @@ const isSimLinkValid = (simLink: string) => {
   return true;
 };
 
+const getTimezoneAdjustedDate = (date: Date) => {
+  return new Date(date.getTime() + date.getTimezoneOffset() * 60000);
+};
+
+// Disables autocomplete on MUI Textfield
+const noAutocomplete = "new-password";
+
 export type { CSVDecodedRow };
 export {
   csv2json,
-  coerceStringToInteger,
+  coerceToNumber,
+  getTimezoneAdjustedDate,
   json2csv,
   isDpoLinkValid,
   isStationCodeValid,
   isNumeric,
+  noAutocomplete,
   percentChange,
   dateToSQLiteDateString,
   objectHasUndefinedValue,
