@@ -23,9 +23,11 @@ import {
   AMXLData,
   DialogInfo,
   LMCPExportableData,
+  LMCPTaskData,
   SameDayData,
 } from "../../types/Tasks";
 import {
+  QueryableLMCPTask,
   QueryableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
@@ -148,38 +150,46 @@ const Tasks = (props: TaskProps) => {
     });
   };
 
-  const saveLMCPTaskToDatabase = async (data: LMCPExportableData) => {
+  const saveLMCPTaskToDatabase = async (data: LMCPTaskData) => {
     const insertableStation: QueryableStation = {
       stationCode: data.stationCode,
     };
 
-    saveStationToDatabase(insertableStation).then(() =>
-      console.log("Finish this...")
-    );
+    saveStationToDatabase(insertableStation).then(() => {
+      const res = QueryableLMCPTask.safeParse(data);
+
+      if (!res.success) {
+        // TODO: Show error dialog
+        console.error(res.error);
+        return;
+      } else {
+        return invoke("insert_lmcp_task", res.data);
+      }
+    });
   };
 
-  const LMCPCompletedHandler = (taskId: number, data: LMCPExportableData) => {
+  const LMCPCompletedHandler = (taskId: number, data: LMCPTaskData) => {
     const dialog: DialogInfo = {
       title: "Complete task?",
       message: "Are you ready to mark this task as completed?",
       options: "YesNo",
       onConfirm: () => {
-        // saveSameDayTaskToDatabase(data)
-        //   .then((res) => {
-        //     console.log(res);
-        //     removeTask(taskId);
-        //     enqueueSnackbar("Same Day task completed", { variant: "success" });
-        //   })
-        //   .catch((err) => {
-        //     console.error(err);
-        //     const dialog: DialogInfo = {
-        //       title: "Error",
-        //       message: `An error occurred when trying to save this task: \n${err}}`,
-        //       error: true,
-        //       options: "Ok",
-        //     };
-        //     showDialog(dialog);
-        //   });
+        saveLMCPTaskToDatabase(data)
+          .then((res) => {
+            console.log(res);
+            removeTask(taskId);
+            enqueueSnackbar("LMCP task completed", { variant: "success" });
+          })
+          .catch((err) => {
+            console.error(err);
+            const dialog: DialogInfo = {
+              title: "Error",
+              message: `An error occurred when trying to save this task: \n${err}}`,
+              error: true,
+              options: "Ok",
+            };
+            showDialog(dialog);
+          });
       },
     };
     showDialog(dialog);
@@ -309,6 +319,7 @@ const Tasks = (props: TaskProps) => {
                   taskId={taskCounter}
                   onComplete={sameDayCompletedHandler}
                   onCancel={taskCanceledHandler}
+                  onShowDialog={showDialog}
                 />,
               ];
               setTaskCounter((prevCounter) => {

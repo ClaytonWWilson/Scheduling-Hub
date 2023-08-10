@@ -135,3 +135,81 @@ pub fn insert_same_day_task(
         }
     }
 }
+
+#[tauri::command]
+pub fn insert_lmcp_task(
+    station_code: &str,
+    ofd_date: &str,
+    ead: &str,
+    current_lmcp: i32,
+    current_atrops: i32,
+    pdr: i32,
+    requested: i32,
+    sim_link: &str,
+    value: i32,
+    start_time: Option<&str>,
+    export_time: Option<&str>,
+    end_time: Option<&str>,
+    source: &str,
+    namespace: &str,
+    type_: &str,
+    wave_group_name: &str,
+    ship_option_category: &str,
+    address_type: &str,
+    package_type: &str,
+    cluster: &str,
+    fulfillment_network_type: &str,
+    volume_type: &str,
+    week: i32,
+    f: &str,
+) -> Result<String, String> {
+    use crate::models::NewLMCPTask;
+    use crate::schema::lmcp_task;
+
+    let new_lmcp_task: NewLMCPTask<'_> = NewLMCPTask {
+        station_code,
+        ofd_date,
+        ead,
+        current_lmcp,
+        current_atrops,
+        pdr,
+        requested,
+        sim_link,
+        value,
+        start_time,
+        export_time,
+        end_time,
+        source,
+        namespace,
+        type_,
+        wave_group_name,
+        ship_option_category,
+        address_type,
+        package_type,
+        cluster,
+        fulfillment_network_type,
+        volume_type,
+        week,
+        f,
+    };
+
+    let mut conn: SqliteConnection = establish_connection();
+
+    let insert_result: std::result::Result<usize, diesel::result::Error> =
+        diesel::insert_into(lmcp_task::table)
+            .values(&new_lmcp_task)
+            .execute(&mut conn);
+
+    match insert_result {
+        Ok(num_inserted) => {
+            let message = format!("Inserted {} lines into lmcp_task table.", num_inserted);
+            println!("{}", message);
+            return Ok(message);
+        }
+        Err(err) => {
+            let message = err.to_string();
+            println!("{}", message);
+            return Err(message);
+        }
+    }
+}

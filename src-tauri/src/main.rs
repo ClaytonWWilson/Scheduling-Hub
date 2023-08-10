@@ -22,7 +22,8 @@ fn main() {
             db::insert_station,
             db::get_stations,
             db::delete_station,
-            db::insert_same_day_task
+            db::insert_same_day_task,
+            db::insert_lmcp_task
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

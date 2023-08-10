@@ -38,10 +38,18 @@ import { enqueueSnackbar } from "notistack";
 
 type LMCPProps = {
   onCancel: (taskId: number) => void;
-  onComplete: (taskId: number, data: LMCPExportableData) => void;
+  onComplete: (taskId: number, data: LMCPTaskData) => void;
   onShowDialog: (dialogInfo: DialogInfo) => void;
   taskId: number;
 };
+
+const TaskTimes = z.object({
+  startTime: z.date().optional(),
+  exportTime: z.date().optional(),
+  endTime: z.date().optional(),
+});
+
+type TaskTimes = z.infer<typeof TaskTimes>;
 
 const emptyRequest = (): LMCPInputs => {
   return {
@@ -96,6 +104,7 @@ const LMCP = (props: LMCPProps) => {
   );
   const [errors, setErrors] = useState<LMCPTaskErrors>({});
   const [showExtended, setShowExtended] = useState(false);
+  const [times, setTimes] = useState<TaskTimes>({});
 
   const importFileHandler = (files: FileList) => {
     // TODO: Error check if wrong file is dropped
@@ -295,6 +304,11 @@ Reason: `;
 
   // Automatically validates the inputs when any of their values change
   useEffect(validateInputData, [currentRequest]);
+
+  // Runs once when the component is mounted
+  useEffect(() => {
+    setTimes({ startTime: new Date() });
+  }, []);
 
   return (
     <DropArea onAccepted={importFileHandler}>
@@ -738,6 +752,9 @@ Reason: `;
         <div className="w-96 flex flex-row gap-x-2">
           <Button
             onClick={() => {
+              setTimes((prev) => {
+                return { ...prev, exportTime: new Date() };
+              });
               exportHandler();
             }}
             variant="outlined"
@@ -761,9 +778,17 @@ Reason: `;
             <Button
               onClick={() => {
                 const res = parseLMCPInputs(currentRequest);
+                const endTime = new Date();
 
                 if (res.success) {
-                  props.onComplete(props.taskId, res.data);
+                  setTimes((prev) => {
+                    return { ...prev, endTime };
+                  });
+                  props.onComplete(props.taskId, {
+                    ...res.data,
+                    ...times,
+                    endTime,
+                  });
                 } else {
                   // Should never occur since the button shouldn't be clickable
                   const dialog: DialogInfo = {
