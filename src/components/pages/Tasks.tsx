@@ -132,13 +132,16 @@ const Tasks = (props: TaskProps) => {
       stationCode: data.stationCode as string,
     };
 
+    // TODO: Fix same day types and fix these hardcoded dates
     return saveStationToDatabase(insertableStation).then(() => {
       const insertableTaskData: QueryableSameDayRouteTask = {
         stationCode: data.stationCode as string,
-        startTime: data.startTime as string,
+        startTime: data.startTime ? data.startTime : new Date(),
         tbaSubmittedCount: data.fileTbaCount,
-        dpoCompleteTime: data.dpoCompleteTime as string,
-        endTime: data.endTime as string,
+        dpoCompleteTime: data.dpoCompleteTime
+          ? data.dpoCompleteTime
+          : new Date(),
+        endTime: data.endTime ? data.endTime : new Date(),
         sameDayType: data.routingType as string,
         bufferPercent: data.bufferPercent as number,
         dpoLink: data.dpoLink as string,

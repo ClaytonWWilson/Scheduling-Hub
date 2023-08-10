@@ -380,7 +380,7 @@ const SameDay = (props: SameDayProps) => {
   // Runs once when the component is mounted
   useEffect(() => {
     setValidatedData((prev) => {
-      return { ...prev, startTime: dateToSQLiteDateString(new Date()) };
+      return { ...prev, startTime: new Date() };
     });
   }, []);
 
@@ -727,7 +727,7 @@ const SameDay = (props: SameDayProps) => {
             <Button
               variant="contained"
               onClick={() => {
-                const completeTime = dateToSQLiteDateString(new Date());
+                const completeTime = new Date();
                 setValidatedData((prev) => {
                   return { ...prev, endTime: completeTime };
                 });

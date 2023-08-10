@@ -203,7 +203,7 @@ export {
   isNumeric,
   noAutocomplete,
   percentChange,
-  dateToSQLiteDateString,
+  // dateToSQLiteDateString,
   objectHasData,
   isSimLinkValid,
 };

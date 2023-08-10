@@ -27,18 +27,37 @@ type AMXLErrors = {
   adhocLink: string;
 };
 
-type SameDayData = {
-  startTime: string | undefined;
-  stationCode: string | undefined;
-  routingType: "samedaysunrise" | "samedayam" | undefined;
-  bufferPercent: number | undefined;
-  dpoLink: string | undefined;
-  dpoCompleteTime: string | undefined;
-  routeCount: number | undefined;
-  fileTbaCount: number | undefined;
-  routedTbaCount: number | undefined;
-  endTime: string | undefined;
-};
+// type SameDayData = {
+//   startTime: string | undefined;
+//   stationCode: string | undefined;
+//   routingType: "samedaysunrise" | "samedayam" | undefined;
+//   bufferPercent: number | undefined;
+//   dpoLink: string | undefined;
+//   dpoCompleteTime: string | undefined;
+//   routeCount: number | undefined;
+//   fileTbaCount: number | undefined;
+//   routedTbaCount: number | undefined;
+//   endTime: string | undefined;
+// };
+
+const SameDayData = z.object({
+  startTime: z.date().optional(),
+  stationCode: z.string().optional(),
+  routingType: z.union([
+    z.literal("samedaysunrise"),
+    z.literal("samedayam"),
+    z.undefined(),
+  ]),
+  bufferPercent: z.number().optional(),
+  dpoLink: z.string().optional(),
+  dpoCompleteTime: z.date().optional(),
+  routeCount: z.number().optional(),
+  fileTbaCount: z.number().optional(),
+  routedTbaCount: z.number().optional(),
+  endTime: z.date().optional(),
+});
+
+type SameDayData = z.infer<typeof SameDayData>;
 
 type SameDayErrors = {
   stationCode: string | undefined;
@@ -184,7 +203,7 @@ const DialogInfo = z.object({
 
 type DialogInfo = z.infer<typeof DialogInfo>;
 
-export type { AMXLData, AMXLErrors, SameDayData, SameDayErrors };
+export type { AMXLData, AMXLErrors, SameDayErrors };
 
 export {
   DialogInfo,
@@ -192,4 +211,5 @@ export {
   LMCPTaskErrors,
   LMCPInputs,
   LMCPExportableData,
+  SameDayData,
 };
