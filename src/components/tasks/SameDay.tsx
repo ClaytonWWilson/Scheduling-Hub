@@ -17,7 +17,7 @@ import CopyAllIcon from "@mui/icons-material/CopyAll";
 import {
   CSVDecodedRow,
   csv2json,
-  dateToSQLiteDateString,
+  // dateToSQLiteDateString,
   isDpoLinkValid,
   isNumeric,
   isStationCodeValid,
@@ -322,7 +322,6 @@ const SameDay = (props: SameDayProps) => {
       errors.bufferPercent = "Buffer percentage must be a positive number.";
     } else {
       validated.bufferPercent = parseInt(userInputs.bufferPercent);
-      validated.dpoCompleteTime = dateToSQLiteDateString(new Date());
     }
     if (errors.bufferPercent) {
       validated.dpoCompleteTime = undefined;
@@ -333,6 +332,7 @@ const SameDay = (props: SameDayProps) => {
       errors.dpoLink = "DPO Link is invalid.";
     } else {
       validated.dpoLink = userInputs.dpoLink;
+      validated.dpoCompleteTime = new Date();
     }
 
     // Validate routedTbaCount
