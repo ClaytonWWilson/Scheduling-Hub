@@ -199,8 +199,6 @@ const LMCP = (props: LMCPProps) => {
   };
 
   const exportHandler = () => {
-    if (!currentRequest) return;
-
     const temp = {
       ...currentRequest,
       value:
@@ -208,7 +206,6 @@ const LMCP = (props: LMCPProps) => {
         parseInt(currentRequest.pdr.toString()),
     };
 
-    // TODO: Need to do this same kind of parsing and validation in the validation func
     const res = LMCPExportableData.safeParse(temp);
 
     if (!res.success) {

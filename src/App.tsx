@@ -68,7 +68,8 @@ export default App;
 // FEATURE: Stats tracking: Number of tasks completed per day/hour. Steps where most time is spent.
 // FEATURE: Confetti when you complete a task faster than your previous record for the month/week
 // FEATURE: Achievements
-// FEATURE: Ask before closing if a task is currently open
+// FEATURE: Ask before closing program if a task is currently open
+// PROPOSAL: Add current routing time to audit?, It could be inaccurate
 
 // TODO: Add aria props where necessary
 // TODO: Add logging to every step of the process

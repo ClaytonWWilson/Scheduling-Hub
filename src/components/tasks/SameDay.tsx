@@ -758,4 +758,3 @@ export default SameDay;
 
 // TODO: Dynamic tooltips on buttons to give more info
 // TODO: Add helpertext prop to textfield to show errors
-// TODO: Show warning when dropping file will overwrite values

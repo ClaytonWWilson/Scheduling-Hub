@@ -387,6 +387,3 @@ const Tasks = (props: TaskProps) => {
 };
 
 export default Tasks;
-
-// TODO: validate input forms with zod. Optional textfield values can be created with
-// const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);
