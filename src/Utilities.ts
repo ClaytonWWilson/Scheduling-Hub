@@ -165,26 +165,6 @@ const dateToSQLiteDateString = (date: Date) => {
   return dateString;
 };
 
-const objectHasUndefinedValue = (obj: { [key: string]: any }) => {
-  const values = Object.values(obj);
-  for (let i = 0; i < values.length; i++) {
-    if (values[i] === undefined) {
-      return false;
-    }
-  }
-  return true;
-};
-
-const objectHasDefinedValue = (obj: { [key: string]: any }) => {
-  const values = Object.values(obj);
-  for (let i = 0; i < values.length; i++) {
-    if (values[i]) {
-      return true;
-    }
-  }
-  return false;
-};
-
 const objectHasData = (obj: {}) => {
   const values = Object.values(obj);
   for (let i = 0; i < values.length; i++) {
@@ -225,7 +205,5 @@ export {
   percentChange,
   dateToSQLiteDateString,
   objectHasData,
-  // objectHasUndefinedValue,
-  // objectHasDefinedValue,
   isSimLinkValid,
 };
