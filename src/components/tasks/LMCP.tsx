@@ -28,6 +28,7 @@ import {
   getTimezoneAdjustedDate,
   json2csv,
   noAutocomplete,
+  objectHasData,
 } from "../../Utilities";
 import { format } from "date-fns";
 import { save } from "@tauri-apps/api/dialog";
@@ -100,7 +101,24 @@ const LMCP = (props: LMCPProps) => {
     // TODO: Error check if wrong file is dropped
     if (files.length === 0) return;
 
-    const inputFile = files[0];
+    if (objectHasData(currentRequest)) {
+      const dialog: DialogInfo = {
+        title: "Overwrite current data?",
+        message:
+          "Importing this file will overwrite your current data. Are you sure?",
+        options: "YesNo",
+        onConfirm: () => {
+          importFiles(files[0]);
+        },
+      };
+      props.onShowDialog(dialog);
+    } else {
+      importFiles(files[0]);
+    }
+  };
+
+  const importFiles = (inputFile: File) => {
+    // const inputFile = files[0];
     const reader = new FileReader();
 
     reader.addEventListener("load", (e) => {

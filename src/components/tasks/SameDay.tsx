@@ -21,9 +21,10 @@ import {
   isDpoLinkValid,
   isNumeric,
   isStationCodeValid,
+  objectHasData,
   percentChange,
 } from "../../Utilities";
-import { SameDayData, SameDayErrors } from "../../types/Tasks";
+import { DialogInfo, SameDayData, SameDayErrors } from "../../types/Tasks";
 import DropArea from "../DropArea";
 import IconTypography from "../IconTypography";
 import { enqueueSnackbar } from "notistack";
@@ -31,6 +32,7 @@ import { enqueueSnackbar } from "notistack";
 type SameDayProps = {
   onCancel: (taskId: number) => void;
   onComplete: (taskId: number, data: SameDayData) => void;
+  onShowDialog: (dialogInfo: DialogInfo) => void;
   taskId: number;
 };
 
@@ -170,7 +172,24 @@ const SameDay = (props: SameDayProps) => {
     // TODO: Error check if wrong file is dropped
     if (files.length === 0) return;
 
-    const inputFile = files[0];
+    if (objectHasData(userInputs)) {
+      const dialog: DialogInfo = {
+        title: "Overwrite current data?",
+        message:
+          "Importing this file will overwrite your current data. Are you sure?",
+        options: "YesNo",
+        onConfirm: () => {
+          importFiles(files[0]);
+        },
+      };
+      props.onShowDialog(dialog);
+    } else {
+      importFiles(files[0]);
+    }
+  };
+
+  const importFiles = (inputFile: File) => {
+    // const inputFile = files[0];
 
     const reader = new FileReader();
 

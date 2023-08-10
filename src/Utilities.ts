@@ -185,6 +185,17 @@ const objectHasDefinedValue = (obj: { [key: string]: any }) => {
   return false;
 };
 
+const objectHasData = (obj: {}) => {
+  const values = Object.values(obj);
+  for (let i = 0; i < values.length; i++) {
+    const val = values[i];
+    if (val !== "" && val !== undefined && val !== null) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const isSimLinkValid = (simLink: string) => {
   const simLinkRegex = /^https:\/\/sim\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g;
   if (simLink.match(simLinkRegex) === null) {
@@ -213,7 +224,8 @@ export {
   noAutocomplete,
   percentChange,
   dateToSQLiteDateString,
-  objectHasUndefinedValue,
-  objectHasDefinedValue,
+  objectHasData,
+  // objectHasUndefinedValue,
+  // objectHasDefinedValue,
   isSimLinkValid,
 };
