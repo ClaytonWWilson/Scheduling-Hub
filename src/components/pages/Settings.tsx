@@ -1,11 +1,12 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import React, { useState } from "react";
-import { AppSettings, Themes } from "../../types/Settings";
+import { AppTheme, AppSettingsType } from "../../types/Settings";
+import App from "../../App";
 
 type SettingsProps = {
   visible: boolean;
-  settings: AppSettings;
-  onSettingsChanged: (settings: AppSettings) => void;
+  settings: AppSettingsType;
+  onSettingsChanged: (settings: AppSettingsType) => void;
 };
 
 const Settings = (props: SettingsProps) => {
@@ -13,7 +14,7 @@ const Settings = (props: SettingsProps) => {
 
   return (
     <div
-      className={`border-green h-full w-full px-2 py-2 flex flex-col ${
+      className={`h-full w-full px-2 py-2 flex flex-col ${
         !props.visible ? "hidden" : ""
       }`}
     >
@@ -23,17 +24,17 @@ const Settings = (props: SettingsProps) => {
           value={settings.theme}
           label="Theme"
           onChange={(e) => {
-            const chosenTheme = e.target.value as Themes;
+            const newTheme = e.target.value as AppTheme;
 
             setSettings((prevSettings) => {
-              const newSettings = { ...prevSettings, theme: chosenTheme };
+              const newSettings = { ...prevSettings, theme: newTheme };
               props.onSettingsChanged(newSettings);
               return newSettings;
             });
           }}
         >
-          <MenuItem value={Themes.darkred}>Dark Red</MenuItem>
-          <MenuItem value={Themes.lightred}>Light Red</MenuItem>
+          <MenuItem value={AppTheme.enum.DARKRED}>Dark Red</MenuItem>
+          <MenuItem value={AppTheme.enum.LIGHTRED}>Light Red</MenuItem>
         </Select>
       </FormControl>
     </div>

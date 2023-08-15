@@ -1,11 +1,13 @@
-type AppSettings = {
-  theme: Themes;
-};
+import { z } from "zod";
 
-enum Themes {
-  lightred = "lightred",
-  darkred = "darkred",
-}
+const AppTheme = z.enum(["LIGHTRED", "DARKRED"]);
 
-export type { AppSettings };
-export { Themes };
+type AppTheme = z.infer<typeof AppTheme>;
+
+const AppSettingsType = z.object({
+  theme: AppTheme,
+});
+
+type AppSettingsType = z.infer<typeof AppSettingsType>;
+
+export { AppTheme, AppSettingsType };

@@ -17,7 +17,7 @@
 }
 
 @layer base {
-  .lightred {
+  .LIGHTRED {
     --bg-primary: var(--lightred-bg);
     --bg-main: var(--red-primarymain);
     --bg-light: var(--red-primarylight);
@@ -36,7 +36,7 @@
     --shadow-primary: 107, 114, 128;
   }
 
-  .darkred {
+  .DARKRED {
     --bg-primary: var(--darkred-bg);
     --bg-main: var(--red-primarymain);
     --bg-light: var(--red-primarylight);
