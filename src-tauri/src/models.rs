@@ -16,7 +16,7 @@ impl Serialize for Station {
     {
         let mut state: <S as Serializer>::SerializeStruct =
             serializer.serialize_struct("Station", 1)?;
-        state.serialize_field("station_code", &self.station_code)?;
+        state.serialize_field("stationCode", &self.station_code)?;
         state.end()
     }
 }
@@ -42,6 +42,28 @@ pub struct SameDayTask {
     pub dpo_link: String,
     pub tba_routed_count: i32,
     pub route_count: i32,
+}
+
+impl Serialize for SameDayTask {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state: <S as Serializer>::SerializeStruct =
+            serializer.serialize_struct("SameDayTask", 11)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("station_code", &self.station_code)?;
+        state.serialize_field("startTime", &self.start_time)?;
+        state.serialize_field("tbaSubmittedCount", &self.tba_submitted_count)?;
+        state.serialize_field("dpoCompleteTime", &self.dpo_complete_time)?;
+        state.serialize_field("endTime", &self.end_time)?;
+        state.serialize_field("SameDayType", &self.same_day_type)?;
+        state.serialize_field("BufferPercent", &self.buffer_percent)?;
+        state.serialize_field("dpoLink", &self.dpo_link)?;
+        state.serialize_field("tbaRoutedCount", &self.tba_routed_count)?;
+        state.serialize_field("RouteCount", &self.route_count)?;
+        state.end()
+    }
 }
 
 #[derive(Insertable)]

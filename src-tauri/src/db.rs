@@ -136,6 +136,24 @@ pub fn insert_same_day_task(
 }
 
 #[tauri::command]
+pub fn get_all_same_day_tasks() -> String {
+    use crate::models::SameDayTask;
+    use crate::schema::same_day_route_task::dsl::*;
+
+    let mut conn: SqliteConnection = establish_connection();
+
+    let results: Vec<SameDayTask> = same_day_route_task
+        .select(SameDayTask::as_select())
+        .load(&mut conn)
+        .expect("Error loading stations.");
+
+    let json_results: String =
+        serde_json::to_string(&results).expect("Could not parse select Station into json string.");
+
+    return json_results;
+}
+
+#[tauri::command]
 pub fn insert_lmcp_task(
     station_code: &str,
     ofd_date: &str,

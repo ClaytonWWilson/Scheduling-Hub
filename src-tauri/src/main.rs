@@ -41,6 +41,7 @@ fn main() {
         db::get_stations,
         db::delete_station,
         db::insert_same_day_task,
+        db::get_all_same_day_tasks,
         db::insert_lmcp_task
     ]);
 

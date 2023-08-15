@@ -7,11 +7,13 @@ import WidgetsIcon from "@mui/icons-material/Widgets";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HandymanIcon from "@mui/icons-material/Handyman";
 import RouteIcon from "@mui/icons-material/Route";
+import ShowChartIcon from "@mui/icons-material/ShowChart";
 import { Paper } from "@mui/material";
+import { Page } from "../types/App";
 
 type SidebarProps = {
-  defaultSelected: string;
-  onSelect: (page: string) => void;
+  defaultSelected: Page;
+  onSelect: (page: Page) => void;
   onCollapse: (isCollapsed: boolean) => void;
 };
 
@@ -49,30 +51,40 @@ const Sidebar = (props: SidebarProps) => {
           collapsed={collapsed}
           label="Tasks"
           onClick={() => {
-            setSelected("tasks");
-            props.onSelect("tasks");
+            setSelected(Page.enum.TASKS);
+            props.onSelect(Page.enum.TASKS);
           }}
-          selected={selected === "tasks"}
+          selected={selected === Page.enum.TASKS}
         />
         <CollapsableButton
           icon={WidgetsIcon}
           collapsed={collapsed}
           label="DCAP"
           onClick={() => {
-            setSelected("dcap");
-            props.onSelect("dcap");
+            setSelected(Page.enum.DCAP);
+            props.onSelect(Page.enum.DCAP);
           }}
-          selected={selected === "dcap"}
+          selected={selected === Page.enum.DCAP}
         />
         <CollapsableButton
           icon={HandymanIcon}
           collapsed={collapsed}
           label="Tools"
           onClick={() => {
-            setSelected("tools");
-            props.onSelect("tools");
+            setSelected(Page.enum.TOOLS);
+            props.onSelect(Page.enum.TOOLS);
           }}
-          selected={selected === "tools"}
+          selected={selected === Page.enum.TOOLS}
+        />
+        <CollapsableButton
+          icon={ShowChartIcon}
+          collapsed={collapsed}
+          label="Stats"
+          onClick={() => {
+            setSelected(Page.enum.STATS);
+            props.onSelect(Page.enum.STATS);
+          }}
+          selected={selected === Page.enum.STATS}
         />
 
         <CollapsableButton
@@ -80,10 +92,10 @@ const Sidebar = (props: SidebarProps) => {
           collapsed={collapsed}
           label="Settings"
           onClick={() => {
-            setSelected("settings");
-            props.onSelect("settings");
+            setSelected(Page.enum.SETTINGS);
+            props.onSelect(Page.enum.SETTINGS);
           }}
-          selected={selected === "settings"}
+          selected={selected === Page.enum.SETTINGS}
           className="mt-auto"
         />
       </Paper>
