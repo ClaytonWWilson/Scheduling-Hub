@@ -2,18 +2,17 @@ use diesel::{connection::SimpleConnection, migration};
 // // #[database("diesel")]
 use diesel::prelude::*;
 use diesel::sqlite::SqliteConnection;
-use dotenvy::dotenv;
-use std::env;
 
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+
+use crate::DATABASE_URL;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("src/migrations");
 
 pub fn establish_connection() -> SqliteConnection {
-    dotenv().ok();
-
-    let database_url: String =
-        env::var("CONNECTION_DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = DATABASE_URL
+        .lock()
+        .expect("Couldn't get mutex lock on DATABASE_URL");
 
     let mut conn: SqliteConnection = SqliteConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
