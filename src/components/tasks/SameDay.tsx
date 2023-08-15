@@ -639,8 +639,9 @@ const SameDay = (props: SameDayProps) => {
               (isNumeric(userInputs.routeCount) &&
               isNumeric(userInputs.bufferPercent)
                 ? Math.ceil(
-                    parseInt(userInputs.routeCount) *
-                      (1 + parseInt(userInputs.bufferPercent) / 100)
+                    parseInt(userInputs.routeCount) +
+                      parseInt(userInputs.routeCount) *
+                        (parseInt(userInputs.bufferPercent) / 100)
                   )
                 : "???")}
           </Typography>
