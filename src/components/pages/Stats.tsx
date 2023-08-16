@@ -315,7 +315,10 @@ const Stats = (props: StatsProps) => {
 
   return (
     <div className={`h-full w-full px-2 ${!props.visible ? "hidden" : ""}`}>
-      <div className="h-96 min-w-[25rem] max-w-[50rem]">
+      <div className="h-96 min-w-[25rem] max-w-[50rem] mb-10">
+        <Typography align="center" variant="h5">
+          Tasks Completed by Day
+        </Typography>
         <ResponsiveLine
           animate
           theme={getNoviTheme(appSettings.theme)}
@@ -357,13 +360,16 @@ const Stats = (props: StatsProps) => {
           }}
         />
       </div>
-      <div className="h-96 min-w-[25rem] max-w-[50rem]">
+      <div className="h-96 min-w-[25rem] max-w-[50rem] mb-16">
+        <Typography align="center" variant="h5">
+          Task Completion Time
+        </Typography>
         <ResponsiveBar
           data={taskTimeData}
           keys={["sameDayCount", "lmcpCount"]}
           indexBy="bucket"
           theme={getNoviTheme(appSettings.theme)}
-          margin={{ top: 50, right: 120, bottom: 50, left: 80 }}
+          margin={{ top: 20, right: 120, bottom: 50, left: 80 }}
           padding={0.3}
           valueScale={{ type: "linear" }}
           indexScale={{ type: "band", round: true }}
@@ -427,7 +433,10 @@ const Stats = (props: StatsProps) => {
           // }
         />
       </div>
-      <div className="h-96 min-w-[25rem] max-w-[50rem]">
+      <div className="h-96 min-w-[25rem] max-w-[50rem] mb-20">
+        <Typography align="center" variant="h5">
+          Task Ratio
+        </Typography>
         <ResponsivePie
           data={allocationPieData}
           theme={getNoviTheme(appSettings.theme)}
@@ -516,11 +525,11 @@ const Stats = (props: StatsProps) => {
       </div>
       {rawSameDayData && rawLMCPData && (
         <div>
-          <Typography>{`Total # of completed tasks: ${sumOfTasks(
+          <Typography align="center">{`Total # of completed tasks: ${sumOfTasks(
             rawSameDayData,
             rawLMCPData
           ).toString()}`}</Typography>
-          <Typography>{`Total # of routed TBAs: ${sumOfTbas(
+          <Typography align="center">{`Total # of routed TBAs: ${sumOfTbas(
             rawSameDayData
           ).toString()}`}</Typography>
         </div>
