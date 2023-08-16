@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ResponsiveLine } from "@nivo/line";
 import { ResponsiveBar } from "@nivo/bar";
+import { ResponsivePie } from "@nivo/pie";
 import { AppContext } from "../../App";
 import { AppTheme } from "../../types/Settings";
 import { noviDarkTheme, noviLightTheme } from "../../Themes";
@@ -106,7 +107,9 @@ const Stats = (props: StatsProps) => {
   const [taskTimeData, setTaskTimeData] = useState<
     { bucket: string; sameDayCount: number; lmcpCount: number }[]
   >([]);
-  // timeAllocationData
+  const [allocationPieData, setAllocationPieData] = useState<
+    { id: string; label: string; value: number; color: string }[]
+  >([]);
 
   const [rawSameDayData, setRawSameDayData] = useState<
     QueryableSameDayRouteTask[] | undefined
@@ -128,7 +131,7 @@ const Stats = (props: StatsProps) => {
 
     loadTaskPerDayPlot(sameDayTasks, lmcpTasks);
     loadTaskTimeHistogram(sameDayTasks, lmcpTasks);
-    loadTimeAllocationPlot();
+    loadTaskAllocationPlot(sameDayTasks, lmcpTasks);
   };
 
   const loadTaskPerDayPlot = (
@@ -284,7 +287,27 @@ const Stats = (props: StatsProps) => {
     setTaskTimeData(combinedHistogramData);
   };
 
-  const loadTimeAllocationPlot = () => {};
+  const loadTaskAllocationPlot = (
+    sameDayTasks: QueryableSameDayRouteTask[],
+    lmcpTasks: QueryableLMCPTask[]
+  ) => {
+    const allocationData = [
+      {
+        id: "SameDay",
+        label: "Same Day",
+        value: sameDayTasks.length,
+        color: "hsl(197, 70%, 50%)",
+      },
+      {
+        id: "LMCP",
+        label: "LMCP",
+        value: lmcpTasks.length,
+        color: "hsl(357, 70%, 50%)",
+      },
+    ];
+
+    setAllocationPieData(allocationData);
+  };
 
   useEffect(() => {
     loadDataAndCharts();
@@ -398,10 +421,97 @@ const Stats = (props: StatsProps) => {
             },
           ]}
           role="application"
-          ariaLabel="Nivo bar chart demo"
-          barAriaLabel={(e) =>
-            e.id + ": " + e.formattedValue + " in country: " + e.indexValue
-          }
+          // ariaLabel="Nivo bar chart demo"
+          // barAriaLabel={(e) =>
+          //   e.id + ": " + e.formattedValue + " in country: " + e.indexValue
+          // }
+        />
+      </div>
+      <div className="h-96 min-w-[25rem] max-w-[50rem]">
+        <ResponsivePie
+          data={allocationPieData}
+          theme={getNoviTheme(appSettings.theme)}
+          margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+          innerRadius={0.5}
+          padAngle={0.7}
+          cornerRadius={3}
+          activeOuterRadiusOffset={8}
+          borderWidth={1}
+          borderColor={{
+            from: "color",
+            modifiers: [["darker", 0.2]],
+          }}
+          arcLinkLabelsSkipAngle={10}
+          // arcLinkLabelsTextColor="#333333"
+          arcLinkLabelsThickness={2}
+          arcLinkLabelsColor={{ from: "color" }}
+          arcLabelsSkipAngle={10}
+          arcLabelsTextColor={{
+            from: "color",
+            modifiers: [["darker", 2]],
+          }}
+          arcLinkLabel={(datum) => {
+            return datum.label as string;
+          }}
+          defs={[
+            {
+              id: "dots",
+              type: "patternDots",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              size: 4,
+              padding: 1,
+              stagger: true,
+            },
+            {
+              id: "lines",
+              type: "patternLines",
+              background: "inherit",
+              color: "rgba(255, 255, 255, 0.3)",
+              rotation: -45,
+              lineWidth: 6,
+              spacing: 10,
+            },
+          ]}
+          fill={[
+            {
+              match: {
+                id: "LMCP",
+              },
+              id: "lines",
+            },
+            {
+              match: {
+                id: "SameDay",
+              },
+              id: "dots",
+            },
+          ]}
+          legends={[
+            {
+              anchor: "bottom",
+              direction: "row",
+              justify: false,
+              translateX: 0,
+              translateY: 56,
+              itemsSpacing: 0,
+              itemWidth: 100,
+              itemHeight: 18,
+              // itemTextColor: "#999",
+              itemDirection: "left-to-right",
+              itemOpacity: 1,
+              symbolSize: 18,
+              symbolShape: "circle",
+              effects: [
+                {
+                  on: "hover",
+                  style: {
+                    itemTextColor: "#000",
+                  },
+                },
+              ],
+            },
+          ]}
         />
       </div>
       {rawSameDayData && rawLMCPData && (

@@ -158,6 +158,7 @@ const noviLightTheme = {
 };
 
 const noviDarkTheme = {
+  textColor: "#FFF",
   dots: {
     text: {
       fill: "#FFFFFF",
