@@ -112,6 +112,42 @@ pub struct LMCPTask {
     pub f: String,
 }
 
+impl Serialize for LMCPTask {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state: <S as Serializer>::SerializeStruct =
+            serializer.serialize_struct("LMCPTask", 25)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("stationCode", &self.station_code)?;
+        state.serialize_field("ofdDate", &self.ofd_date)?;
+        state.serialize_field("ead", &self.ead)?;
+        state.serialize_field("currentLmcp", &self.current_lmcp)?;
+        state.serialize_field("currentAtrops", &self.current_atrops)?;
+        state.serialize_field("pdr", &self.pdr)?;
+        state.serialize_field("requested", &self.requested)?;
+        state.serialize_field("simLink", &self.sim_link)?;
+        state.serialize_field("value", &self.value)?;
+        state.serialize_field("startTime", &self.start_time)?;
+        state.serialize_field("exportTime", &self.export_time)?;
+        state.serialize_field("endTime", &self.end_time)?;
+        state.serialize_field("source", &self.source)?;
+        state.serialize_field("namespace", &self.namespace)?;
+        state.serialize_field("type", &self.type_)?;
+        state.serialize_field("waveGroupName", &self.wave_group_name)?;
+        state.serialize_field("shipOptionCategory", &self.ship_option_category)?;
+        state.serialize_field("addressType", &self.address_type)?;
+        state.serialize_field("packageType", &self.package_type)?;
+        state.serialize_field("cluster", &self.cluster)?;
+        state.serialize_field("fulfillmentNetworkType", &self.fulfillment_network_type)?;
+        state.serialize_field("volumeType", &self.volume_type)?;
+        state.serialize_field("week", &self.week)?;
+        state.serialize_field("f", &self.f)?;
+        state.end()
+    }
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = schema::lmcp_task)]
 pub struct NewLMCPTask<'a> {

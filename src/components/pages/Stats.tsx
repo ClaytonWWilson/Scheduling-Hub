@@ -1,17 +1,23 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ResponsiveLine } from "@nivo/line";
+import { ResponsiveBar } from "@nivo/bar";
 import { AppContext } from "../../App";
 import { AppTheme } from "../../types/Settings";
 import { noviDarkTheme, noviLightTheme } from "../../Themes";
 import { invoke } from "@tauri-apps/api";
-import { QueryableSameDayRouteTask } from "../../types/Database";
+import {
+  QueryableLMCPTask,
+  QueryableSameDayRouteTask,
+} from "../../types/Database";
 import { z } from "zod";
+import { Typography } from "@mui/material";
+import { countMatchingElements } from "../../Utilities";
 
 type StatsProps = {
   visible: boolean;
 };
 
-const LinePlotDatapoint = z.object({
+const LinePlotLineData = z.object({
   id: z.string(),
   data: z.array(
     z.object({
@@ -20,7 +26,7 @@ const LinePlotDatapoint = z.object({
     })
   ),
 });
-type LinePlotDatapoint = z.infer<typeof LinePlotDatapoint>;
+type LinePlotLineData = z.infer<typeof LinePlotLineData>;
 
 const getNoviTheme = (appTheme: AppTheme) => {
   switch (appTheme) {
@@ -31,49 +37,257 @@ const getNoviTheme = (appTheme: AppTheme) => {
   }
 };
 
-const sameDayToTimePlot = (sameDayData: QueryableSameDayRouteTask[]) => {
-  const plotData: LinePlotDatapoint = { id: "Same Day Tasks", data: [] };
+const sumOfTasks = (
+  sameDayTasks: QueryableSameDayRouteTask[],
+  lmcpTasks: QueryableLMCPTask[]
+) => {
+  let sum = 0;
 
-  // Sum same day tasks by start date
-  const taskCounter = new Map<string, number>();
-  sameDayData.forEach((task) => {
-    const taskDate = (task.startTime as string).replace("T", " ").split(" ")[0];
-    const temp = taskCounter.get(taskDate);
-    const count = temp ? temp : 0;
-    taskCounter.set(taskDate, count + 1);
+  sum += sameDayTasks.length;
+  sum += lmcpTasks.length;
+
+  return sum;
+};
+
+const sumOfTbas = (sameDayTasks: QueryableSameDayRouteTask[]) => {
+  let sum = 0;
+
+  sameDayTasks.forEach((task) => {
+    sum += task.tbaRoutedCount;
   });
 
-  let sortedDates = [...taskCounter.entries()].sort((a, b) => {
-    const difference = new Date(a[0]).valueOf() - new Date(b[0]).valueOf();
-    return difference;
+  return sum;
+};
+
+const makeHistogramData = (
+  rawData: number[],
+  bucketSize: number,
+  options?: { start: number; end: number }
+) => {
+  const adjustedData = rawData.map((el) => {
+    return Math.ceil(el / bucketSize);
   });
 
-  sortedDates.forEach((day) => {
-    plotData.data.push({
-      x: day[0],
-      y: day[1],
+  const start = options?.start ? options.start : Math.min(...rawData);
+  const end = options?.end ? options.end : Math.max(...rawData);
+
+  const bucketedData = countMatchingElements(adjustedData).sort((a, b) => {
+    return a[0] - b[0];
+  });
+
+  // Put bucketedData in buckets and fill in any zero buckets
+  const buckets: [number, number][] = [];
+  const startBucket = Math.ceil(start / bucketSize);
+  const endBucket = Math.ceil(end / bucketSize);
+  for (let i = startBucket; i <= endBucket; i++) {
+    const temp = bucketedData.find((el) => {
+      return el[0] == i;
     });
+
+    const count = temp ? temp[1] : 0;
+    buckets.push([i, count]);
+  }
+
+  const data = buckets.map((bucket) => {
+    return {
+      bucket: `${(bucket[0] - 1) * bucketSize} - ${bucket[0] * bucketSize}`,
+      count: bucket[1],
+    };
   });
 
-  return plotData;
+  return data;
 };
 
 const Stats = (props: StatsProps) => {
   const appSettings = useContext(AppContext);
-  const [tasksPerDayData, setTasksPerDayData] = useState<LinePlotDatapoint[]>(
+  const [tasksPerDayData, setTasksPerDayData] = useState<LinePlotLineData[]>(
     []
   );
+  const [taskTimeData, setTaskTimeData] = useState<
+    { bucket: string; sameDayCount: number; lmcpCount: number }[]
+  >([]);
+  // timeAllocationData
+
+  const [rawSameDayData, setRawSameDayData] = useState<
+    QueryableSameDayRouteTask[] | undefined
+  >();
+  const [rawLMCPData, setRawLMCPData] = useState<
+    QueryableLMCPTask[] | undefined
+  >();
+
+  const loadDataAndCharts = async () => {
+    // TODO: Zod parse the data after fixing types
+    const sameDayResults = await invoke<string>("get_all_same_day_tasks");
+    const lmcpResults = await invoke<string>("get_all_lmcp_tasks");
+    const sameDayTasks: QueryableSameDayRouteTask[] =
+      JSON.parse(sameDayResults);
+    const lmcpTasks: QueryableLMCPTask[] = JSON.parse(lmcpResults);
+
+    setRawSameDayData(sameDayTasks);
+    setRawLMCPData(lmcpTasks);
+
+    loadTaskPerDayPlot(sameDayTasks, lmcpTasks);
+    loadTaskTimeHistogram(sameDayTasks, lmcpTasks);
+    loadTimeAllocationPlot();
+  };
+
+  const loadTaskPerDayPlot = (
+    sameDayTasks: QueryableSameDayRouteTask[],
+    lmcpTasks: QueryableLMCPTask[]
+  ) => {
+    const sameDayDateStrings: string[] = sameDayTasks
+      .filter((task) => {
+        if (task.startTime === undefined) return false;
+        return true;
+      })
+      .map((task) => {
+        // BUG: Fix this type so it's clear that database queries can't return Date() objects
+        const date: string = (task.startTime as string)
+          .replace("T", " ")
+          .split(" ")[0];
+        return date;
+      });
+
+    const sameDayDateOccurances = countMatchingElements(sameDayDateStrings);
+
+    const sameDayPlot: LinePlotLineData = { id: "Same Day Tasks", data: [] };
+    sameDayPlot.data.push(
+      ...sameDayDateOccurances.map((occurance) => {
+        return {
+          x: occurance[0], // Date
+          y: occurance[1], // Times on date
+        };
+      })
+    );
+
+    const lmcpDateStrings: string[] = lmcpTasks
+      .filter((task) => {
+        if (task.startTime === undefined) return false;
+        return true;
+      })
+      .map((task) => {
+        const date: string = (task.startTime as unknown as string)
+          .replace("T", " ")
+          .split(" ")[0];
+        return date;
+      });
+
+    const lmcpDateOccurances = countMatchingElements(lmcpDateStrings);
+    const lmcpPlot: LinePlotLineData = { id: "LMCP Tasks", data: [] };
+
+    lmcpPlot.data.push(
+      ...lmcpDateOccurances.map((occurance) => {
+        return {
+          x: occurance[0],
+          y: occurance[1],
+        };
+      })
+    );
+
+    setTasksPerDayData([sameDayPlot, lmcpPlot]);
+  };
+
+  const loadTaskTimeHistogram = (
+    sameDayTasks: QueryableSameDayRouteTask[],
+    lmcpTasks: QueryableLMCPTask[]
+  ) => {
+    const BUCKET_SIZE = 5;
+    const MIN_VALUE = 0;
+
+    const sameDayTaskLengthsMinutes = sameDayTasks
+      .filter((task) => {
+        if (task.startTime === undefined || task.endTime === undefined) {
+          return false;
+        } else {
+          return true;
+        }
+      })
+      .map((task) => {
+        const startDate = new Date(task.startTime);
+        const endDate = new Date(task.endTime);
+        const minutesTaken =
+          (endDate.valueOf() - startDate.valueOf()) / 1000 / 60;
+        return minutesTaken;
+      });
+
+    const lmcpTaskLengthMinutes = lmcpTasks
+      .filter((task) => {
+        if (task.startTime === undefined || task.endTime === undefined) {
+          return false;
+        } else {
+          return true;
+        }
+      })
+      .map((task) => {
+        // TODO: Fix type here
+        const startDate = new Date(task.startTime as unknown as string);
+        const endDate = new Date(task.endTime as unknown as string);
+        const minutesTaken =
+          (endDate.valueOf() - startDate.valueOf()) / 1000 / 60;
+        return minutesTaken;
+      });
+
+    const MAX_VALUE = Math.ceil(
+      Math.max(...sameDayTaskLengthsMinutes, ...lmcpTaskLengthMinutes)
+    );
+
+    const sameDayHistogramData = makeHistogramData(
+      sameDayTaskLengthsMinutes,
+      BUCKET_SIZE,
+      { start: MIN_VALUE, end: MAX_VALUE }
+    );
+
+    const lmcpHistogramData = makeHistogramData(
+      lmcpTaskLengthMinutes,
+      BUCKET_SIZE,
+      {
+        start: MIN_VALUE,
+        end: MAX_VALUE,
+      }
+    );
+
+    // Combine datasets
+    const maxLength = Math.max(
+      sameDayHistogramData.length,
+      lmcpHistogramData.length
+    );
+    const combinedHistogramData = [];
+
+    for (let i = 0; i < maxLength; i++) {
+      const lmcpData:
+        | {
+            bucket: string;
+            count: number;
+          }
+        | undefined = lmcpHistogramData[i];
+      const sameDayData:
+        | {
+            bucket: string;
+            count: number;
+          }
+        | undefined = sameDayHistogramData[i];
+
+      let bucket: string;
+      if (lmcpData) {
+        bucket = lmcpData.bucket;
+      } else {
+        bucket = sameDayData.bucket;
+      }
+
+      combinedHistogramData.push({
+        bucket,
+        sameDayCount: sameDayData?.count ? sameDayData.count : 0,
+        lmcpCount: lmcpData?.count ? lmcpData.count : 0,
+      });
+    }
+
+    setTaskTimeData(combinedHistogramData);
+  };
+
+  const loadTimeAllocationPlot = () => {};
 
   useEffect(() => {
-    invoke("get_all_same_day_tasks")
-      .then((res) => {
-        const tasks: QueryableSameDayRouteTask[] = JSON.parse(res as string);
-        const plotData = sameDayToTimePlot(tasks);
-        setTasksPerDayData([plotData]);
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+    loadDataAndCharts();
   }, []);
 
   return (
@@ -120,6 +334,87 @@ const Stats = (props: StatsProps) => {
           }}
         />
       </div>
+      <div className="h-96 min-w-[25rem] max-w-[50rem]">
+        <ResponsiveBar
+          data={taskTimeData}
+          keys={["sameDayCount", "lmcpCount"]}
+          indexBy="bucket"
+          theme={getNoviTheme(appSettings.theme)}
+          margin={{ top: 50, right: 120, bottom: 50, left: 80 }}
+          padding={0.3}
+          valueScale={{ type: "linear" }}
+          indexScale={{ type: "band", round: true }}
+          colors={{ scheme: "nivo" }}
+          borderColor={{
+            from: "color",
+            modifiers: [["darker", 1.6]],
+          }}
+          axisTop={null}
+          axisRight={null}
+          axisBottom={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: "time (minutes)",
+            legendPosition: "middle",
+            legendOffset: 32,
+          }}
+          axisLeft={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: "# of tasks",
+            legendPosition: "middle",
+            legendOffset: -40,
+          }}
+          labelSkipWidth={12}
+          labelSkipHeight={12}
+          labelTextColor={{
+            from: "color",
+            modifiers: [["darker", 1.6]],
+          }}
+          legends={[
+            {
+              dataFrom: "keys",
+              anchor: "bottom-right",
+              direction: "column",
+              justify: false,
+              translateX: 210,
+              translateY: 0,
+              itemsSpacing: 2,
+              itemWidth: 200,
+              itemHeight: 20,
+              itemDirection: "left-to-right",
+              itemOpacity: 0.85,
+              symbolSize: 20,
+              effects: [
+                {
+                  on: "hover",
+                  style: {
+                    itemOpacity: 1,
+                  },
+                },
+              ],
+            },
+          ]}
+          role="application"
+          ariaLabel="Nivo bar chart demo"
+          barAriaLabel={(e) =>
+            e.id + ": " + e.formattedValue + " in country: " + e.indexValue
+          }
+        />
+      </div>
+      {rawSameDayData && rawLMCPData && (
+        <div>
+          <Typography>{`Total # of completed tasks: ${sumOfTasks(
+            rawSameDayData,
+            rawLMCPData
+          ).toString()}`}</Typography>
+          <Typography>{`Total # of routed TBAs: ${sumOfTbas(
+            rawSameDayData
+          ).toString()}`}</Typography>
+        </div>
+      )}
     </div>
   );
 };

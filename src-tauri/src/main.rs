@@ -42,7 +42,8 @@ fn main() {
         db::delete_station,
         db::insert_same_day_task,
         db::get_all_same_day_tasks,
-        db::insert_lmcp_task
+        db::insert_lmcp_task,
+        db::get_all_lmcp_tasks
     ]);
 
     let app = app_builder

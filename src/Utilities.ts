@@ -192,6 +192,17 @@ const getTimezoneAdjustedDate = (date: Date) => {
 // Disables autocomplete on MUI Textfield
 const noAutocomplete = "new-password";
 
+const countMatchingElements = <T>(elements: T[]) => {
+  const occuranceCounter = new Map<T, number>();
+  elements.forEach((element) => {
+    const temp = occuranceCounter.get(element);
+    const count = temp ? temp : 0;
+    occuranceCounter.set(element, count + 1);
+  });
+
+  return [...occuranceCounter.entries()];
+};
+
 export type { CSVDecodedRow };
 export {
   csv2json,
@@ -206,4 +217,5 @@ export {
   // dateToSQLiteDateString,
   objectHasData,
   isSimLinkValid,
+  countMatchingElements,
 };

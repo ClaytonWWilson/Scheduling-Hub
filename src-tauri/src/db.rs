@@ -230,3 +230,21 @@ pub fn insert_lmcp_task(
         }
     }
 }
+
+#[tauri::command]
+pub fn get_all_lmcp_tasks() -> String {
+    use crate::models::LMCPTask;
+    use crate::schema::lmcp_task::dsl::*;
+
+    let mut conn: SqliteConnection = establish_connection();
+
+    let results: Vec<LMCPTask> = lmcp_task
+        .select(LMCPTask::as_select())
+        .load(&mut conn)
+        .expect("Error loading stations.");
+
+    let json_results: String =
+        serde_json::to_string(&results).expect("Could not parse select Station into json string.");
+
+    return json_results;
+}
