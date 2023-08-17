@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "scheduling-hub",
+    "productName": "Scheduling Hub",
     "version": "0.0.1"
   },
   "tauri": {
@@ -61,7 +61,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "Scheduling Hub",
+        "title": "Scheduling Hub v0.0.1",
         "width": 800,
         "height": 600,
         "fileDropEnabled": false

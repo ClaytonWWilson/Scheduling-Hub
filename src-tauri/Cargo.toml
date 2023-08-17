@@ -1,10 +1,10 @@
 [package]
 name = "scheduling-hub"
-version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+version = "0.0.1"
+description = "A tool for Schedulers"
+authors = ["Clayton Wilson"]
+license = "MIT"
+repository = "https://github.com/ClaytonWWilson/Scheduling-Hub"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
