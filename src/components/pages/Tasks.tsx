@@ -311,7 +311,6 @@ const Tasks = (props: TaskProps) => {
           key="Same Day"
           icon={<RocketLaunchIcon />}
           tooltipTitle="Same Day"
-          tooltipOpen
           onClick={() => {
             setNewTaskOpen(false);
             setCurrentTasks((prev) => {
@@ -360,7 +359,6 @@ const Tasks = (props: TaskProps) => {
           key="LMCP"
           icon={<ThunderstormIcon />}
           tooltipTitle="LMCP"
-          tooltipOpen
           onClick={() => {
             setNewTaskOpen(false);
             setCurrentTasks((prev) => {
