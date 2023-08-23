@@ -68,6 +68,7 @@ type SameDayErrors = {
   routedTbaCount: string | undefined;
 };
 
+const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
 const LMCPExportableData = z.object({
   source: z.string(),
   namespace: z.string(),
@@ -88,8 +89,16 @@ const LMCPExportableData = z.object({
     z.literal("Residential"),
   ]),
   packageType: z.union([z.literal(""), z.literal("StandardParcel")]),
-  ofdDate: z.coerce.date().transform((date) => format(date, "yyyy-MM-dd")),
-  ead: z.coerce.date().transform((date) => format(date, "yyyy-MM-dd")),
+  ofdDate: z.coerce
+    .date()
+    .max(new Date(Date.now() + twoDaysInMs), "More than 2 days in the future")
+    .min(new Date(Date.now() - twoDaysInMs), "More than 2 days in the past")
+    .transform((date) => format(date, "yyyy-MM-dd")),
+  ead: z.coerce
+    .date()
+    .max(new Date(Date.now() + twoDaysInMs), "More than 2 days in the future")
+    .min(new Date(Date.now() - twoDaysInMs), "More than 2 days in the past")
+    .transform((date) => format(date, "yyyy-MM-dd")),
   cluster: z.string(),
   fulfillmentNetworkType: z.string(),
   volumeType: z.string(),

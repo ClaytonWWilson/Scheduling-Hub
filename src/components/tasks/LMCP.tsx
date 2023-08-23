@@ -18,6 +18,7 @@ import {
   Paper,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -95,7 +96,6 @@ const parseLMCPInputs = (currentData: LMCPInputs) => {
 };
 
 const LMCP = (props: LMCPProps) => {
-  const inputs = useState<LMCPInputs>();
   const [importedRequests, setImportedRequests] = useState(
     new Map<string, LMCPInputs>()
   );
@@ -328,194 +328,255 @@ Reason: `;
             LMCP Adjustment
           </Typography>
         </div>
-        <Autocomplete
-          options={[...importedRequests.keys()]}
-          value={currentRequest.stationCode}
-          getOptionLabel={(option) => option}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Station"
-              inputProps={{
-                ...params.inputProps,
-                autoComplete: noAutocomplete,
-              }}
-              onChange={(e) => {
-                const stationCode = e.target.value;
+        <Tooltip
+          title={currentRequest.stationCode !== "" ? errors.stationCode : ""}
+          followCursor
+        >
+          <Autocomplete
+            options={[...importedRequests.keys()]}
+            value={currentRequest.stationCode}
+            getOptionLabel={(option) => option}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Station"
+                inputProps={{
+                  ...params.inputProps,
+                  autoComplete: noAutocomplete,
+                }}
+                onChange={(e) => {
+                  const stationCode = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, stationCode };
+                  });
+                }}
+                error={
+                  errors.stationCode !== undefined &&
+                  currentRequest.stationCode !== ""
+                }
+              />
+            )}
+            onChange={(_, stationCode) => {
+              if (!stationCode) {
                 setCurrentRequest((prev) => {
-                  return { ...prev, stationCode };
+                  return { ...prev, stationCode: "" };
+                });
+                return;
+              }
+
+              const temp = importedRequests.get(stationCode);
+              let nextRequest: LMCPInputs;
+
+              if (temp) {
+                nextRequest = temp;
+              } else {
+                nextRequest = emptyRequest();
+              }
+              setCurrentRequest(() => {
+                // Update import map
+                const copyOfImported = importedRequests;
+                copyOfImported.set(currentRequest.stationCode, currentRequest);
+
+                setImportedRequests(copyOfImported);
+                return nextRequest;
+              });
+            }}
+            freeSolo
+            disablePortal
+          />
+        </Tooltip>
+        <div className="flex flex-row gap-x-2">
+          <Tooltip
+            title={currentRequest.ofdDate !== "" ? errors.ofdDate : ""}
+            followCursor
+          >
+            <div>
+              <DatePicker
+                label="OFD Date"
+                value={(() => {
+                  // Keeps the datepicker from throwing an error
+                  if (currentRequest.ofdDate === "") return null;
+                  return getTimezoneAdjustedDate(currentRequest.ofdDate);
+                })()}
+                onChange={(newOfdDate) => {
+                  if (!newOfdDate) return null;
+
+                  setCurrentRequest((prevSelected) => {
+                    return { ...prevSelected, ofdDate: newOfdDate };
+                  });
+                }}
+                slotProps={{
+                  textField: {
+                    error:
+                      currentRequest.ofdDate !== "" && errors.ofdDate
+                        ? true
+                        : false,
+                  },
+                }}
+              />
+            </div>
+          </Tooltip>
+          <Tooltip
+            title={currentRequest.ead !== "" ? errors.ead : ""}
+            followCursor
+          >
+            <div>
+              <DatePicker
+                label="EAD Date"
+                value={(() => {
+                  // Keeps the datepicker from throwing an error
+                  if (currentRequest.ead === "") return null;
+                  return getTimezoneAdjustedDate(currentRequest.ead);
+                })()}
+                onChange={(newEadDate) => {
+                  if (!newEadDate) return null;
+
+                  setCurrentRequest((prevSelected) => {
+                    return { ...prevSelected, ead: newEadDate };
+                  });
+                }}
+                slotProps={{
+                  textField: {
+                    error:
+                      currentRequest.ead !== "" && errors.ead ? true : false,
+                  },
+                }}
+              />
+            </div>
+          </Tooltip>
+        </div>
+        <div className="flex flex-row gap-x-2">
+          <Tooltip
+            title={currentRequest.currentLmcp !== "" ? errors.currentLmcp : ""}
+            followCursor
+          >
+            <TextField
+              label="Current LMCP"
+              autoComplete={noAutocomplete}
+              aria-autocomplete="none"
+              className="w-full"
+              value={currentRequest.currentLmcp}
+              onChange={(e) => {
+                const current = e.target.value
+                  .replaceAll(",", "")
+                  .replaceAll(" ", "");
+
+                setCurrentRequest((prevSelected) => {
+                  const updatedSelected = {
+                    ...prevSelected,
+                    currentLmcp: current,
+                  };
+
+                  return updatedSelected;
                 });
               }}
               error={
-                errors.stationCode !== undefined &&
-                currentRequest.stationCode !== ""
+                errors.currentLmcp !== undefined &&
+                currentRequest.currentLmcp !== ""
               }
             />
-          )}
-          onChange={(_, stationCode) => {
-            if (!stationCode) {
-              setCurrentRequest((prev) => {
-                return { ...prev, stationCode: "" };
-              });
-              return;
+          </Tooltip>
+          <Tooltip
+            title={
+              currentRequest.currentAtrops !== "" ? errors.currentAtrops : ""
             }
+            followCursor
+          >
+            <TextField
+              label="Current ATROPS"
+              autoComplete={noAutocomplete}
+              aria-autocomplete="none"
+              className="w-full"
+              value={currentRequest.currentAtrops}
+              onChange={(e) => {
+                const atrops = e.target.value
+                  .replaceAll(",", "")
+                  .replaceAll(" ", "");
 
-            const temp = importedRequests.get(stationCode);
-            let nextRequest: LMCPInputs;
-
-            if (temp) {
-              nextRequest = temp;
-            } else {
-              nextRequest = emptyRequest();
-            }
-            setCurrentRequest(() => {
-              // Update import map
-              const copyOfImported = importedRequests;
-              copyOfImported.set(currentRequest.stationCode, currentRequest);
-
-              setImportedRequests(copyOfImported);
-              return nextRequest;
-            });
-          }}
-          freeSolo
-          disablePortal
-        />
-        <div className="flex flex-row gap-x-2">
-          <DatePicker
-            label="OFD Date"
-            value={(() => {
-              // Keeps the datepicker from throwing an error
-              if (currentRequest.ofdDate === "") return null;
-              return getTimezoneAdjustedDate(currentRequest.ofdDate);
-            })()}
-            onChange={(newOfdDate) => {
-              if (!newOfdDate) return null;
-
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, ofdDate: newOfdDate };
-              });
-            }}
-          />
-          <DatePicker
-            label="EAD Date"
-            value={(() => {
-              // Keeps the datepicker from throwing an error
-              if (currentRequest.ead === "") return null;
-              return getTimezoneAdjustedDate(currentRequest.ead);
-            })()}
-            onChange={(newEadDate) => {
-              if (!newEadDate) return null;
-
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, ead: newEadDate };
-              });
-            }}
-          />
+                setCurrentRequest((prevSelected) => {
+                  return { ...prevSelected, currentAtrops: atrops };
+                });
+              }}
+              error={
+                errors.currentAtrops !== undefined &&
+                currentRequest.currentAtrops !== ""
+              }
+            />
+          </Tooltip>
         </div>
         <div className="flex flex-row gap-x-2">
-          <TextField
-            label="Current LMCP"
-            autoComplete={noAutocomplete}
-            aria-autocomplete="none"
-            className="w-full"
-            value={currentRequest.currentLmcp}
-            onChange={(e) => {
-              const current = e.target.value
-                .replaceAll(",", "")
-                .replaceAll(" ", "");
+          <Tooltip
+            title={currentRequest.pdr !== "" ? errors.pdr : ""}
+            followCursor
+          >
+            <TextField
+              label="PDR"
+              autoComplete={noAutocomplete}
+              aria-autocomplete="none"
+              className="w-full"
+              value={currentRequest.pdr}
+              onChange={(e) => {
+                const pdr = e.target.value
+                  .replaceAll(",", "")
+                  .replaceAll(" ", "");
 
-              setCurrentRequest((prevSelected) => {
-                const updatedSelected = {
-                  ...prevSelected,
-                  currentLmcp: current,
-                };
+                setCurrentRequest((prevSelected) => {
+                  return { ...prevSelected, pdr: pdr };
+                });
+              }}
+              error={errors.pdr !== undefined && currentRequest.pdr !== ""}
+            />
+          </Tooltip>
 
-                return updatedSelected;
-              });
-            }}
-            error={
-              errors.currentLmcp !== undefined &&
-              currentRequest.currentLmcp !== ""
-            }
-          />
-          <TextField
-            label="Current ATROPS"
-            autoComplete={noAutocomplete}
-            aria-autocomplete="none"
-            className="w-full"
-            value={currentRequest.currentAtrops}
-            onChange={(e) => {
-              const atrops = e.target.value
-                .replaceAll(",", "")
-                .replaceAll(" ", "");
+          <Tooltip
+            title={currentRequest.requested !== "" ? errors.requested : ""}
+            followCursor
+          >
+            <TextField
+              label="Requested Value"
+              autoComplete={noAutocomplete}
+              aria-autocomplete="none"
+              className="w-full"
+              value={currentRequest.requested}
+              onChange={(e) => {
+                const requested = e.target.value
+                  .replaceAll(",", "")
+                  .replaceAll(" ", "");
 
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, currentAtrops: atrops };
-              });
-            }}
-            error={
-              errors.currentAtrops !== undefined &&
-              currentRequest.currentAtrops !== ""
-            }
-          />
+                setCurrentRequest((prevSelected) => {
+                  return { ...prevSelected, requested: requested };
+                });
+              }}
+              error={
+                errors.requested !== undefined &&
+                currentRequest.requested !== ""
+              }
+            />
+          </Tooltip>
         </div>
         <div className="flex flex-row gap-x-2">
-          <TextField
-            label="PDR"
-            autoComplete={noAutocomplete}
-            aria-autocomplete="none"
-            className="w-full"
-            value={currentRequest.pdr}
-            onChange={(e) => {
-              const pdr = e.target.value
-                .replaceAll(",", "")
-                .replaceAll(" ", "");
+          <Tooltip
+            title={currentRequest.simLink !== "" ? errors.simLink : ""}
+            followCursor
+          >
+            <TextField
+              label="SIM Link"
+              autoComplete={noAutocomplete}
+              aria-autocomplete="none"
+              className="w-full"
+              value={currentRequest.simLink}
+              onChange={(e) => {
+                const simLink = e.target.value;
 
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, pdr: pdr };
-              });
-            }}
-            error={errors.pdr !== undefined && currentRequest.pdr !== ""}
-          />
-
-          <TextField
-            label="Requested Value"
-            autoComplete={noAutocomplete}
-            aria-autocomplete="none"
-            className="w-full"
-            value={currentRequest.requested}
-            onChange={(e) => {
-              const requested = e.target.value
-                .replaceAll(",", "")
-                .replaceAll(" ", "");
-
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, requested: requested };
-              });
-            }}
-            error={
-              errors.requested !== undefined && currentRequest.requested !== ""
-            }
-          />
-        </div>
-        <div className="flex flex-row gap-x-2">
-          <TextField
-            label="SIM Link"
-            autoComplete={noAutocomplete}
-            aria-autocomplete="none"
-            className="w-full"
-            value={currentRequest.simLink}
-            onChange={(e) => {
-              const simLink = e.target.value;
-
-              setCurrentRequest((prevSelected) => {
-                return { ...prevSelected, simLink: simLink };
-              });
-            }}
-            error={
-              errors.simLink !== undefined && currentRequest.simLink !== ""
-            }
-          />
+                setCurrentRequest((prevSelected) => {
+                  return { ...prevSelected, simLink: simLink };
+                });
+              }}
+              error={
+                errors.simLink !== undefined && currentRequest.simLink !== ""
+              }
+            />
+          </Tooltip>
         </div>
         <div>
           <LMCPStatusOverview
@@ -536,213 +597,287 @@ Reason: `;
         </FormGroup>
         <div className={`flex-col gap-y-2 ${showExtended ? "flex" : "hidden"}`}>
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Wave Group Name"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.waveGroupName}
-              onChange={(e) => {
-                const waveGroupName = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, waveGroupName };
-                });
-              }}
-              error={
-                errors.waveGroupName !== undefined &&
-                currentRequest.waveGroupName !== ""
+            <Tooltip
+              title={
+                currentRequest.waveGroupName !== "" ? errors.waveGroupName : ""
               }
-            />
-            <TextField
-              label="Week"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.week}
-              onChange={(e) => {
-                const week = e.target.value
-                  .replaceAll(",", "")
-                  .replaceAll(" ", "");
+              followCursor
+            >
+              <TextField
+                label="Wave Group Name"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.waveGroupName}
+                onChange={(e) => {
+                  const waveGroupName = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, waveGroupName };
+                  });
+                }}
+                error={
+                  errors.waveGroupName !== undefined &&
+                  currentRequest.waveGroupName !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={currentRequest.week !== "" ? errors.week : ""}
+              followCursor
+            >
+              <TextField
+                label="Week"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.week}
+                onChange={(e) => {
+                  const week = e.target.value
+                    .replaceAll(",", "")
+                    .replaceAll(" ", "");
 
-                setCurrentRequest((prev) => {
-                  return { ...prev, week };
-                });
-              }}
-              error={errors.week !== undefined && currentRequest.week !== ""}
-            />
+                  setCurrentRequest((prev) => {
+                    return { ...prev, week };
+                  });
+                }}
+                error={errors.week !== undefined && currentRequest.week !== ""}
+              />
+            </Tooltip>
           </div>
 
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Source"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.source}
-              onChange={(e) => {
-                const source = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, source };
-                });
-              }}
-              error={
-                errors.source !== undefined && currentRequest.source !== ""
-              }
-            />
-            <TextField
-              label="Namespace"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.namespace}
-              onChange={(e) => {
-                const namespace = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, namespace };
-                });
-              }}
-              error={
-                errors.namespace !== undefined &&
-                currentRequest.namespace !== ""
-              }
-            />
-            <TextField
-              label="Type"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.type}
-              onChange={(e) => {
-                const type = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, type };
-                });
-              }}
-              error={errors.type !== undefined && currentRequest.type !== ""}
-            />
+            <Tooltip
+              title={currentRequest.source !== "" ? errors.source : ""}
+              followCursor
+            >
+              <TextField
+                label="Source"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.source}
+                onChange={(e) => {
+                  const source = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, source };
+                  });
+                }}
+                error={
+                  errors.source !== undefined && currentRequest.source !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={currentRequest.namespace !== "" ? errors.namespace : ""}
+              followCursor
+            >
+              <TextField
+                label="Namespace"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.namespace}
+                onChange={(e) => {
+                  const namespace = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, namespace };
+                  });
+                }}
+                error={
+                  errors.namespace !== undefined &&
+                  currentRequest.namespace !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={currentRequest.type !== "" ? errors.type : ""}
+              followCursor
+            >
+              <TextField
+                label="Type"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.type}
+                onChange={(e) => {
+                  const type = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, type };
+                  });
+                }}
+                error={errors.type !== undefined && currentRequest.type !== ""}
+              />
+            </Tooltip>
           </div>
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Ship Option Category"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.shipOptionCategory}
-              onChange={(e) => {
-                const shipOptionCategory = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, shipOptionCategory };
-                });
-              }}
-              error={
-                errors.shipOptionCategory !== undefined &&
+            <Tooltip
+              title={
                 currentRequest.shipOptionCategory !== ""
+                  ? errors.shipOptionCategory
+                  : ""
               }
-            />
-            <TextField
-              label="Address Type"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.addressType}
-              onChange={(e) => {
-                const addressType = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, addressType };
-                });
-              }}
-              error={
-                errors.addressType !== undefined &&
-                currentRequest.addressType !== ""
+              followCursor
+            >
+              <TextField
+                label="Ship Option Category"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.shipOptionCategory}
+                onChange={(e) => {
+                  const shipOptionCategory = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, shipOptionCategory };
+                  });
+                }}
+                error={
+                  errors.shipOptionCategory !== undefined &&
+                  currentRequest.shipOptionCategory !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={
+                currentRequest.addressType !== "" ? errors.addressType : ""
               }
-            />
+              followCursor
+            >
+              <TextField
+                label="Address Type"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.addressType}
+                onChange={(e) => {
+                  const addressType = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, addressType };
+                  });
+                }}
+                error={
+                  errors.addressType !== undefined &&
+                  currentRequest.addressType !== ""
+                }
+              />
+            </Tooltip>
           </div>
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Package Type"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.packageType}
-              onChange={(e) => {
-                const packageType = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, packageType };
-                });
-              }}
-              error={
-                errors.packageType !== undefined &&
-                currentRequest.packageType !== ""
+            <Tooltip
+              title={
+                currentRequest.packageType !== "" ? errors.packageType : ""
               }
-            />
-            <TextField
-              label="Volume Type"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.volumeType}
-              onChange={(e) => {
-                const volumeType = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, volumeType };
-                });
-              }}
-              error={
-                errors.volumeType !== undefined &&
-                currentRequest.volumeType !== ""
-              }
-            />
+              followCursor
+            >
+              <TextField
+                label="Package Type"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.packageType}
+                onChange={(e) => {
+                  const packageType = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, packageType };
+                  });
+                }}
+                error={
+                  errors.packageType !== undefined &&
+                  currentRequest.packageType !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={currentRequest.volumeType !== "" ? errors.volumeType : ""}
+              followCursor
+            >
+              <TextField
+                label="Volume Type"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.volumeType}
+                onChange={(e) => {
+                  const volumeType = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, volumeType };
+                  });
+                }}
+                error={
+                  errors.volumeType !== undefined &&
+                  currentRequest.volumeType !== ""
+                }
+              />
+            </Tooltip>
           </div>
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Cluster"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.cluster}
-              onChange={(e) => {
-                const cluster = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, cluster };
-                });
-              }}
-              error={
-                errors.cluster !== undefined && currentRequest.cluster !== ""
-              }
-            />
-            <TextField
-              label="f"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.f}
-              onChange={(e) => {
-                const f = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, f };
-                });
-              }}
-              error={errors.f !== undefined && currentRequest.f !== ""}
-            />
+            <Tooltip
+              title={currentRequest.cluster !== "" ? errors.cluster : ""}
+              followCursor
+            >
+              <TextField
+                label="Cluster"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.cluster}
+                onChange={(e) => {
+                  const cluster = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, cluster };
+                  });
+                }}
+                error={
+                  errors.cluster !== undefined && currentRequest.cluster !== ""
+                }
+              />
+            </Tooltip>
+            <Tooltip
+              title={currentRequest.f !== "" ? errors.f : ""}
+              followCursor
+            >
+              <TextField
+                label="f"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.f}
+                onChange={(e) => {
+                  const f = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, f };
+                  });
+                }}
+                error={errors.f !== undefined && currentRequest.f !== ""}
+              />
+            </Tooltip>
           </div>
           <div className="flex flex-row gap-x-2">
-            <TextField
-              label="Fulfillment Network Type"
-              autoComplete={noAutocomplete}
-              aria-autocomplete="none"
-              className="w-full"
-              value={currentRequest.fulfillmentNetworkType}
-              onChange={(e) => {
-                const fulfillmentNetworkType = e.target.value;
-                setCurrentRequest((prev) => {
-                  return { ...prev, fulfillmentNetworkType };
-                });
-              }}
-              error={
-                errors.fulfillmentNetworkType !== undefined &&
+            <Tooltip
+              title={
                 currentRequest.fulfillmentNetworkType !== ""
+                  ? errors.fulfillmentNetworkType
+                  : ""
               }
-            />
+              followCursor
+            >
+              <TextField
+                label="Fulfillment Network Type"
+                autoComplete={noAutocomplete}
+                aria-autocomplete="none"
+                className="w-full"
+                value={currentRequest.fulfillmentNetworkType}
+                onChange={(e) => {
+                  const fulfillmentNetworkType = e.target.value;
+                  setCurrentRequest((prev) => {
+                    return { ...prev, fulfillmentNetworkType };
+                  });
+                }}
+                error={
+                  errors.fulfillmentNetworkType !== undefined &&
+                  currentRequest.fulfillmentNetworkType !== ""
+                }
+              />
+            </Tooltip>
           </div>
         </div>
 
