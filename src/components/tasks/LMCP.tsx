@@ -918,8 +918,9 @@ Reason: `;
                   });
                   props.onComplete(props.taskId, {
                     ...res.data,
-                    ...times,
-                    endTime,
+                    startTime: times.startTime?.toISOString(),
+                    exportTime: times.exportTime?.toISOString(),
+                    endTime: endTime.toISOString(),
                   });
                 } else {
                   // Should never occur since the button shouldn't be clickable

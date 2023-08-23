@@ -134,9 +134,9 @@ const LMCPTaskData = LMCPExportableData.merge(
         /^https:\/\/(sim|issues)\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g,
         "Invalid SIM link"
       ),
-    startTime: z.date().optional(),
-    exportTime: z.date().optional(),
-    endTime: z.date().optional(),
+    startTime: z.string().datetime().optional(),
+    exportTime: z.string().datetime().optional(),
+    endTime: z.string().datetime().optional(),
   })
 );
 
