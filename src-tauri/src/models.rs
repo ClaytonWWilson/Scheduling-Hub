@@ -33,10 +33,10 @@ pub struct NewStation<'a> {
 pub struct SameDayTask {
     pub id: i32,
     pub station_code: String,
-    pub start_time: String,
+    pub start_time: Option<String>,
     pub tba_submitted_count: Option<i32>,
-    pub dpo_complete_time: String,
-    pub end_time: String,
+    pub dpo_complete_time: Option<String>,
+    pub end_time: Option<String>,
     pub same_day_type: String,
     pub buffer_percent: i32,
     pub dpo_link: String,

@@ -35,10 +35,10 @@ diesel::table! {
     same_day_route_task (id) {
         id -> Integer,
         station_code -> Text,
-        start_time -> Date,
+        start_time -> Nullable<Date>,
         tba_submitted_count -> Nullable<Integer>,
-        dpo_complete_time -> Date,
-        end_time -> Date,
+        dpo_complete_time -> Nullable<Date>,
+        end_time -> Nullable<Date>,
         same_day_type -> Text,
         buffer_percent -> Integer,
         dpo_link -> Text,
