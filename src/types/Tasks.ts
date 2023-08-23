@@ -40,6 +40,17 @@ type AMXLErrors = {
 //   endTime: string | undefined;
 // };
 
+const SameDayInputs = z.object({
+  stationCode: z.string(),
+  routingType: z.string(),
+  bufferPercent: z.string(),
+  dpoLink: z.string(),
+  routedTbaCount: z.string(),
+  routeCount: z.string(),
+});
+
+type SameDayInputs = z.infer<typeof SameDayInputs>;
+
 const SameDayData = z.object({
   startTime: z.date().optional(),
   stationCode: z.string().optional(),
@@ -220,5 +231,6 @@ export {
   LMCPTaskErrors,
   LMCPInputs,
   LMCPExportableData,
+  SameDayInputs,
   SameDayData,
 };

@@ -24,7 +24,12 @@ import {
   objectHasData,
   percentChange,
 } from "../../Utilities";
-import { DialogInfo, SameDayData, SameDayErrors } from "../../types/Tasks";
+import {
+  DialogInfo,
+  SameDayData,
+  SameDayErrors,
+  SameDayInputs,
+} from "../../types/Tasks";
 import DropArea from "../DropArea";
 import IconTypography from "../IconTypography";
 import { enqueueSnackbar } from "notistack";
@@ -34,16 +39,6 @@ type SameDayProps = {
   onComplete: (taskId: number, data: SameDayData) => void;
   onShowDialog: (dialogInfo: DialogInfo) => void;
   taskId: number;
-};
-
-// Stores all the raw strings from the user before they are validated
-type SameDayUserInputs = {
-  stationCode: string;
-  routingType: string;
-  bufferPercent: string;
-  dpoLink: string;
-  routedTbaCount: string;
-  routeCount: string;
 };
 
 // Checks all inputs
@@ -125,7 +120,7 @@ const percentToTextColor = (
 };
 
 const SameDay = (props: SameDayProps) => {
-  const [userInputs, setUserInputs] = useState<SameDayUserInputs>({
+  const [userInputs, setUserInputs] = useState<SameDayInputs>({
     stationCode: "",
     routingType: "",
     bufferPercent: "",
@@ -147,13 +142,13 @@ const SameDay = (props: SameDayProps) => {
     endTime: undefined,
   });
 
-  const [focused, setFocused] = useState({
-    stationCode: false,
-    bufferPercent: false,
-    dpoLink: false,
-    routeCount: false,
-    routedTbaCount: false,
-  });
+  // const [focused, setFocused] = useState({
+  //   stationCode: false,
+  //   bufferPercent: false,
+  //   dpoLink: false,
+  //   routeCount: false,
+  //   routedTbaCount: false,
+  // });
 
   const [fileData, setFileData] = useState<CSVDecodedRow[] | undefined>(
     undefined
@@ -426,26 +421,9 @@ const SameDay = (props: SameDayProps) => {
               return { ...prev, stationCode: code };
             });
           }}
-          color={(() => {
-            if (focused.stationCode && userInputs.stationCode.length === 0) {
-              return "primary";
-            } else if (errors.stationCode) {
-              return "error";
-            } else {
-              return "success";
-            }
-          })()}
-          focused={focused.stationCode || userInputs.stationCode.length != 0}
-          onFocus={() =>
-            setFocused((prev) => {
-              return { ...prev, stationCode: true };
-            })
+          error={
+            userInputs.stationCode !== "" && errors.stationCode !== undefined
           }
-          onBlur={() => {
-            setFocused((prev) => {
-              return { ...prev, stationCode: false };
-            });
-          }}
           autoComplete="aaaaa"
           aria-autocomplete="none"
           className="w-96"
@@ -492,31 +470,10 @@ const SameDay = (props: SameDayProps) => {
               return { ...prev, bufferPercent: percent };
             });
           }}
-          color={(() => {
-            if (
-              focused.bufferPercent &&
-              userInputs.bufferPercent.length === 0
-            ) {
-              return "primary";
-            } else if (errors.bufferPercent) {
-              return "error";
-            } else {
-              return "success";
-            }
-          })()}
-          focused={
-            focused.bufferPercent || userInputs.bufferPercent.length != 0
+          error={
+            userInputs.bufferPercent !== "" &&
+            errors.bufferPercent !== undefined
           }
-          onFocus={() =>
-            setFocused((prev) => {
-              return { ...prev, bufferPercent: true };
-            })
-          }
-          onBlur={() => {
-            setFocused((prev) => {
-              return { ...prev, bufferPercent: false };
-            });
-          }}
           autoComplete="aaaaa"
           aria-autocomplete="none"
           className="w-96"
@@ -534,26 +491,7 @@ const SameDay = (props: SameDayProps) => {
               return { ...prev, dpoLink: link };
             });
           }}
-          color={(() => {
-            if (focused.dpoLink && userInputs.dpoLink.length === 0) {
-              return "primary";
-            } else if (errors.dpoLink) {
-              return "error";
-            } else {
-              return "success";
-            }
-          })()}
-          focused={focused.dpoLink || userInputs.dpoLink.length != 0}
-          onFocus={() =>
-            setFocused((prev) => {
-              return { ...prev, dpoLink: true };
-            })
-          }
-          onBlur={() => {
-            setFocused((prev) => {
-              return { ...prev, dpoLink: false };
-            });
-          }}
+          error={userInputs.dpoLink !== "" && errors.dpoLink !== undefined}
           autoComplete="aaaaa"
           aria-autocomplete="none"
           className="w-96"
@@ -569,31 +507,10 @@ const SameDay = (props: SameDayProps) => {
                 return { ...prev, routedTbaCount: numOfTBAs };
               });
             }}
-            color={(() => {
-              if (
-                focused.routedTbaCount &&
-                userInputs.routedTbaCount.length === 0
-              ) {
-                return "primary";
-              } else if (errors.routedTbaCount) {
-                return "error";
-              } else {
-                return "success";
-              }
-            })()}
-            focused={
-              focused.routedTbaCount || userInputs.routedTbaCount.length != 0
+            error={
+              userInputs.routedTbaCount !== "" &&
+              errors.routedTbaCount !== undefined
             }
-            onFocus={() =>
-              setFocused((prev) => {
-                return { ...prev, routedTbaCount: true };
-              })
-            }
-            onBlur={() => {
-              setFocused((prev) => {
-                return { ...prev, routedTbaCount: false };
-              });
-            }}
             autoComplete="aaaaa"
             aria-autocomplete="none"
             className="w-full"
@@ -608,26 +525,9 @@ const SameDay = (props: SameDayProps) => {
                 return { ...prev, routeCount: NumOfRoutes };
               });
             }}
-            color={(() => {
-              if (focused.routeCount && userInputs.routeCount.length === 0) {
-                return "primary";
-              } else if (errors.routeCount) {
-                return "error";
-              } else {
-                return "success";
-              }
-            })()}
-            focused={focused.routeCount || userInputs.routeCount.length != 0}
-            onFocus={() =>
-              setFocused((prev) => {
-                return { ...prev, routeCount: true };
-              })
+            error={
+              userInputs.routeCount !== "" && errors.routeCount !== undefined
             }
-            onBlur={() => {
-              setFocused((prev) => {
-                return { ...prev, routeCount: false };
-              });
-            }}
             autoComplete="aaaaa"
             aria-autocomplete="none"
             className="w-full"
