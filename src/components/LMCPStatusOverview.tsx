@@ -57,8 +57,10 @@ const getApprovalStatus = (
     return LMCPApprovalStatus.enum.auto_approved;
   } else if (percent > 5 && percent <= 10) {
     return LMCPApprovalStatus.enum.l7_required;
-  } else {
+  } else if (percent > 10) {
     return LMCPApprovalStatus.enum.war_room;
+  } else {
+    return LMCPApprovalStatus.enum.unknown;
   }
 };
 
@@ -120,9 +122,13 @@ const LMCPStatusOverview = (props: LMCPStatusProps) => {
   useEffect(() => {
     if (
       props.requested <= 0 ||
+      Number.isNaN(props.requested) ||
       props.currentLmcp <= 0 ||
+      Number.isNaN(props.currentLmcp) ||
       props.currentAtrops <= 0 ||
-      props.pdr < 0
+      Number.isNaN(props.currentAtrops) ||
+      props.pdr < 0 ||
+      Number.isNaN(props.pdr)
     ) {
       setValuesDisplayable(false);
     } else {

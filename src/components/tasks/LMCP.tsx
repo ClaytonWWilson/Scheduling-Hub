@@ -84,7 +84,7 @@ const parseLMCPInputs = (currentData: LMCPInputs) => {
   // @ts-ignore
   temp.requested = coerceToNumber(temp.requested);
   // @ts-ignore
-  temp.pdr = coerceToNumber(temp.pdr);
+  temp.pdr = coerceToNumber(temp.pdr, { emptyZero: true });
   // @ts-ignore
   temp.currentLmcp = coerceToNumber(temp.currentLmcp);
   // @ts-ignore
@@ -583,7 +583,7 @@ Reason: `;
         <div>
           <LMCPStatusOverview
             requested={coerceToNumber(currentRequest.requested)}
-            pdr={coerceToNumber(currentRequest.pdr)}
+            pdr={coerceToNumber(currentRequest.pdr, { emptyZero: true })}
             currentLmcp={coerceToNumber(currentRequest.currentLmcp)}
             currentAtrops={coerceToNumber(currentRequest.currentAtrops)}
           />

@@ -130,10 +130,17 @@ const isDpoLinkValid = (link: string, stationCode: string) => {
   return true;
 };
 
-const coerceToNumber = (val: any) => {
+const coerceToNumber = (val: any, options?: { emptyZero?: boolean }) => {
   try {
     val = val.replaceAll(",", "");
   } catch (error) {}
+
+  if (options?.emptyZero && val === "") {
+    return 0;
+  } else if (val === "") {
+    return NaN;
+  }
+
   const numberSchema = z.coerce.number();
 
   const res = numberSchema.safeParse(val);
