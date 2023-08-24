@@ -328,7 +328,7 @@ const Stats = (props: StatsProps) => {
             format: "%b %d",
             legend: "day",
             legendOffset: -12,
-            tickValues: "every 1 days",
+            // tickValues: "",
           }}
           axisLeft={{
             legend: "# of tasks",
