@@ -36,18 +36,31 @@ const SelectableSameDayRouteTask = z.object({
 
 type SelectableSameDayRouteTask = z.infer<typeof SelectableSameDayRouteTask>;
 
-const QueryableLMCPTask = LMCPTaskData.merge(
+const SelectableLMCPTask = LMCPTaskData.merge(
   z.object({
-    id: z.number().positive().optional(),
+    id: z.number().positive(),
+    startTime: z.union([z.string().datetime(), z.null()]),
+    exportTime: z.union([z.string().datetime(), z.null()]),
+    endTime: z.union([z.string().datetime(), z.null()]),
   })
 );
 
-type QueryableLMCPTask = z.infer<typeof QueryableLMCPTask>;
+type SelectableLMCPTask = z.infer<typeof SelectableLMCPTask>;
+
+const InsertableLMCPTask = LMCPTaskData.merge(
+  z.object({
+    startTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
+    exportTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
+    endTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
+  })
+);
+type InsertableLMCPTask = z.infer<typeof InsertableLMCPTask>;
 
 export type {
   QueryableStation,
+  SelectableLMCPTask,
   InsertableSameDayRouteTask,
   SelectableSameDayRouteTask,
 };
 
-export { QueryableLMCPTask };
+export { InsertableLMCPTask };

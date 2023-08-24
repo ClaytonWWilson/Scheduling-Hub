@@ -7,7 +7,7 @@ import { AppTheme } from "../../types/Settings";
 import { noviDarkTheme, noviLightTheme } from "../../Themes";
 import { invoke } from "@tauri-apps/api";
 import {
-  QueryableLMCPTask,
+  SelectableLMCPTask,
   SelectableSameDayRouteTask,
 } from "../../types/Database";
 import { z } from "zod";
@@ -40,7 +40,7 @@ const getNoviTheme = (appTheme: AppTheme) => {
 
 const sumOfTasks = (
   sameDayTasks: SelectableSameDayRouteTask[],
-  lmcpTasks: QueryableLMCPTask[]
+  lmcpTasks: SelectableLMCPTask[]
 ) => {
   let sum = 0;
 
@@ -115,7 +115,7 @@ const Stats = (props: StatsProps) => {
     SelectableSameDayRouteTask[] | undefined
   >();
   const [rawLMCPData, setRawLMCPData] = useState<
-    QueryableLMCPTask[] | undefined
+    SelectableLMCPTask[] | undefined
   >();
 
   const loadDataAndCharts = async () => {
@@ -124,7 +124,7 @@ const Stats = (props: StatsProps) => {
     const lmcpResults = await invoke<string>("get_all_lmcp_tasks");
     const sameDayTasks: SelectableSameDayRouteTask[] =
       JSON.parse(sameDayResults);
-    const lmcpTasks: QueryableLMCPTask[] = JSON.parse(lmcpResults);
+    const lmcpTasks: SelectableLMCPTask[] = JSON.parse(lmcpResults);
 
     setRawSameDayData(sameDayTasks);
     setRawLMCPData(lmcpTasks);
@@ -136,15 +136,14 @@ const Stats = (props: StatsProps) => {
 
   const loadTaskPerDayPlot = (
     sameDayTasks: SelectableSameDayRouteTask[],
-    lmcpTasks: QueryableLMCPTask[]
+    lmcpTasks: SelectableLMCPTask[]
   ) => {
     const sameDayDateStrings: string[] = sameDayTasks
       .filter((task) => {
-        if (task.startTime === undefined) return false;
+        if (task.startTime === null) return false;
         return true;
       })
       .map((task) => {
-        // BUG: Fix this type so it's clear that database queries can't return Date() objects
         const date: string = (task.startTime as string)
           .replace("T", " ")
           .split(" ")[0];
@@ -165,11 +164,11 @@ const Stats = (props: StatsProps) => {
 
     const lmcpDateStrings: string[] = lmcpTasks
       .filter((task) => {
-        if (task.startTime === undefined) return false;
+        if (task.startTime === null) return false;
         return true;
       })
       .map((task) => {
-        const date: string = (task.startTime as unknown as string)
+        const date: string = (task.startTime as string)
           .replace("T", " ")
           .split(" ")[0];
         return date;
@@ -192,7 +191,7 @@ const Stats = (props: StatsProps) => {
 
   const loadTaskTimeHistogram = (
     sameDayTasks: SelectableSameDayRouteTask[],
-    lmcpTasks: QueryableLMCPTask[]
+    lmcpTasks: SelectableLMCPTask[]
   ) => {
     const BUCKET_SIZE = 5;
     const MIN_VALUE = 0;
@@ -217,16 +216,17 @@ const Stats = (props: StatsProps) => {
 
     const lmcpTaskLengthMinutes = lmcpTasks
       .filter((task) => {
-        if (task.startTime === undefined || task.endTime === undefined) {
+        if (task.startTime === null || task.endTime === null) {
           return false;
         } else {
           return true;
         }
       })
       .map((task) => {
-        // TODO: Fix type here
-        const startDate = new Date(task.startTime as unknown as string);
-        const endDate = new Date(task.endTime as unknown as string);
+        // @ts-ignore
+        const startDate = new Date(task.startTime);
+        // @ts-ignore
+        const endDate = new Date(task.endTime);
         const minutesTaken =
           (endDate.valueOf() - startDate.valueOf()) / 1000 / 60;
         return minutesTaken;
@@ -291,7 +291,7 @@ const Stats = (props: StatsProps) => {
 
   const loadTaskAllocationPlot = (
     sameDayTasks: SelectableSameDayRouteTask[],
-    lmcpTasks: QueryableLMCPTask[]
+    lmcpTasks: SelectableLMCPTask[]
   ) => {
     const allocationData = [
       {

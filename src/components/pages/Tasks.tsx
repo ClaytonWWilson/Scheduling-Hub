@@ -21,7 +21,7 @@ import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 // import AMXL from "../tasks/AMXL";
 import { DialogInfo, LMCPTaskData, SameDayData } from "../../types/Tasks";
 import {
-  QueryableLMCPTask,
+  InsertableLMCPTask,
   InsertableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
@@ -115,7 +115,7 @@ const Tasks = (props: TaskProps) => {
     };
 
     saveStationToDatabase(insertableStation).then(() => {
-      const res = QueryableLMCPTask.safeParse(data);
+      const res = InsertableLMCPTask.safeParse(data);
 
       if (!res.success) {
         // TODO: Show error dialog
