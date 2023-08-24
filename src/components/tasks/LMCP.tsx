@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ZodError, z } from "zod";
+import { z } from "zod";
 import { fromZodError } from "zod-validation-error";
 import {
   DialogInfo,

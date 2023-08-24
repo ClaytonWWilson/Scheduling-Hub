@@ -1,23 +1,9 @@
 import { z } from "zod";
-import { LMCPTaskData, SameDayData } from "./Tasks";
+import { LMCPTaskData } from "./Tasks";
 
 type QueryableStation = {
   stationCode: string;
 };
-
-// type QueryableSameDayRouteTask = {
-//   id?: number;
-//   stationCode: string;
-//   startTime: string;
-//   tbaSubmittedCount?: number;
-//   dpoCompleteTime: string;
-//   endTime: string;
-//   sameDayType: string;
-//   bufferPercent: number;
-//   dpoLink: string;
-//   tbaRoutedCount: number;
-//   routeCount: number;
-// };
 
 const QueryableSameDayRouteTask = z.object({
   id: z.number().positive().optional(),

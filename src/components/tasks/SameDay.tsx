@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
-  Autocomplete,
   Button,
   FormControlLabel,
   IconButton,
   InputAdornment,
-  MenuItem,
   Paper,
   Radio,
   RadioGroup,
@@ -19,10 +17,7 @@ import {
   CSVDecodedRow,
   coerceToNumber,
   csv2json,
-  // dateToSQLiteDateString,
-  isDpoLinkValid,
   isNumeric,
-  isStationCodeValid,
   objectHasData,
   percentChange,
 } from "../../Utilities";
@@ -66,66 +61,14 @@ const parseSameDayInputs = (currentData: SameDayInputs) => {
   return SameDayData.safeParse(temp);
 };
 
-// Checks all inputs
-const areInputErrors = (data: SameDayData, errors: SameDayErrors) => {
-  // Check if any input data is empty
-  for (let i = 0; i < Object.entries(data).length; i++) {
-    const [key, val] = Object.entries(data)[i];
-    if (val === undefined && key !== "fileTbaCount" && key !== "endTime") {
-      // # of TBAs in file is not required to finish a task, it just helps to verify volume
-      return true;
-    }
-  }
-
-  // Check if there are any errors
-  for (let i = 0; i < Object.entries(errors).length; i++) {
-    const [_key, val] = Object.entries(errors)[i];
-    if (val !== undefined) {
-      return true;
-    }
-  }
-
-  return false;
-};
-
 // Only check inputs required for volume check
 const areVolumeCheckErrors = (errors: SameDayErrors) => {
-  // Can't do a volume check without file volume
-  // if (!data.fileTbaCount) return true;
-
-  const val = Boolean(
+  return Boolean(
     errors.stationCode ||
       errors.routingType ||
       errors.routedTbaCount ||
       errors.fileTbaCount
   );
-  console.log(val);
-  return val;
-
-  // const volumeCheckRequiredKeys = [
-  //   "stationCode",
-  //   "routingType",
-  //   "routedTbaCount",
-  //   "fileTbaCount",
-  // ];
-
-  // // Check if any required input data is missing
-  // for (let i = 0; i < Object.entries(data).length; i++) {
-  //   const [key, val] = Object.entries(data)[i];
-  //   if (volumeCheckRequiredKeys.indexOf(key) != -1 && val === undefined) {
-  //     return true;
-  //   }
-  // }
-
-  // // Check if there are any errors in the required data
-  // for (let i = 0; i < Object.entries(errors).length; i++) {
-  //   const [key, val] = Object.entries(errors)[i];
-  //   if (volumeCheckRequiredKeys.indexOf(key) != -1 && val !== undefined) {
-  //     return true;
-  //   }
-  // }
-
-  // return false;
 };
 
 const percentToTextColor = (
@@ -159,8 +102,6 @@ const getVolumeAudit = (
   fileTbaCount: number,
   routedTbaCount: number
 ) => {
-  // if (!validatedData.fileTbaCount || !validatedData.routedTbaCount) return "";
-
   const blurb = `/md\n**${stationCode}** ${
     routingType == "samedaysunrise" ? "SAME_DAY_SUNRISE" : "SAME_DAY_AM"
   }: Routing completed.\nFile: **${fileTbaCount}** TBAs // Routed: **${routedTbaCount}** TBAs // Delta: **${percentChange(
@@ -172,10 +113,6 @@ const getVolumeAudit = (
 };
 
 const getDispatchAudit = (data: SameDayData) => {
-  // const totalRoutes = Math.ceil(
-  //   parseInt(userInputs.routeCount) *
-  //     (1 + parseInt(userInputs.bufferPercent) / 100)
-  // );
   const totalRoutes = Math.ceil(
     data.routeCount * (1 + data.bufferPercent / 100)
   );
@@ -243,8 +180,6 @@ const SameDay = (props: SameDayProps) => {
   };
 
   const importFiles = (inputFile: File) => {
-    // const inputFile = files[0];
-
     const reader = new FileReader();
 
     reader.addEventListener("load", (e) => {
@@ -266,10 +201,6 @@ const SameDay = (props: SameDayProps) => {
       setUserInputs((prev) => {
         return { ...prev, stationCode, routingType, fileTbaCount };
       });
-
-      // setValidatedData((currentData) => {
-      //   return { ...currentData, fileTbaCount };
-      // });
 
       setFileData(fileJson);
     });
@@ -306,7 +237,6 @@ const SameDay = (props: SameDayProps) => {
   // Checks all user input and sets errors and validated data
   const validateInputData = () => {
     const res = parseSameDayInputs(userInputs);
-    console.log(res);
 
     if (res.success) {
       setErrors({});
@@ -401,15 +331,6 @@ const SameDay = (props: SameDayProps) => {
           />
         </Tooltip>
 
-        {/* <Autocomplete
-          disablePortal
-          freeSolo
-          options={["DBO7", "DAU5", "DBM3"]}
-          renderInput={(params) => (
-            <TextField {...params} label="Station Code" />
-          )}
-          className="w-96"
-        /> */}
         <Typography className="pl-2">Same Day Type:</Typography>
         <RadioGroup
           value={userInputs.routingType}

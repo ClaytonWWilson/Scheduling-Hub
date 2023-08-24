@@ -1,4 +1,3 @@
-import { format } from "date-fns";
 import { z } from "zod";
 
 type CSVDecodedRow = {
@@ -108,28 +107,6 @@ const isNumeric = (str: string, { ignoreCommas = false } = {}) => {
   );
 };
 
-const isDpoLinkValid = (link: string, stationCode: string) => {
-  if (
-    link.match(
-      /^https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g
-    ) === null
-  ) {
-    return false;
-  }
-
-  // BUG: Date in DPO link could be incorrect
-
-  // Return true if station code is blank to avoid confusion. User will not be able to proceed in this state anyways.
-  if (stationCode.length === 0) {
-    return true;
-  }
-
-  if (!link.includes(stationCode)) {
-    return false;
-  }
-  return true;
-};
-
 const coerceToNumber = (val: any, options?: { emptyZero?: boolean }) => {
   try {
     val = val.replaceAll(",", "");
@@ -152,24 +129,10 @@ const coerceToNumber = (val: any, options?: { emptyZero?: boolean }) => {
   }
 };
 
-const isStationCodeValid = (stationCode: string) => {
-  return stationCode.match(/^[A-Z]{3}[1-9]{1}$/) !== null;
-};
-
 const percentChange = (initial: number, final: number) => {
   const difference = final - initial;
   const value = difference / Math.abs(initial);
   return Math.abs(value * 100);
-};
-
-const dateToSQLiteDateString = (date: Date) => {
-  // const year = date.getFullYear()
-  // const month = String(date.getMonth()).padStart(4, '0')
-  // const day =
-
-  // const dateString = `YYYY-MM-DD HH:MM:SS.SSS`
-  const dateString = format(date, "yyyy-MM-dd HH:mm:ss.SSS");
-  return dateString;
 };
 
 const objectHasData = (obj: {}) => {
@@ -181,15 +144,6 @@ const objectHasData = (obj: {}) => {
     }
   }
   return false;
-};
-
-const isSimLinkValid = (simLink: string) => {
-  const simLinkRegex = /^https:\/\/sim\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g;
-  if (simLink.match(simLinkRegex) === null) {
-    return false;
-  }
-
-  return true;
 };
 
 const getTimezoneAdjustedDate = (date: Date) => {
@@ -216,13 +170,9 @@ export {
   coerceToNumber,
   getTimezoneAdjustedDate,
   json2csv,
-  isDpoLinkValid,
-  isStationCodeValid,
   isNumeric,
   noAutocomplete,
   percentChange,
-  // dateToSQLiteDateString,
   objectHasData,
-  isSimLinkValid,
   countMatchingElements,
 };

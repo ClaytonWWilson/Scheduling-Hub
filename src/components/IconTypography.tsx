@@ -1,6 +1,5 @@
 import { SvgIconTypeMap, Typography } from "@mui/material";
 import { OverridableComponent } from "@mui/material/OverridableComponent";
-// import { Typography } from "@mui/material/styles/createTypography";
 import React, { ComponentProps, ReactNode } from "react";
 
 interface IconTypographyProps extends ComponentProps<typeof Typography> {

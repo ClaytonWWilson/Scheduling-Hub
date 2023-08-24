@@ -1,7 +1,6 @@
 import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import React, { useState } from "react";
 import { AppTheme, AppSettingsType } from "../../types/Settings";
-import App from "../../App";
 
 type SettingsProps = {
   visible: boolean;

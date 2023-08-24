@@ -19,13 +19,7 @@ import RocketLaunchIcon from "@mui/icons-material/RocketLaunch";
 // import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 // import AMXL from "../tasks/AMXL";
-import {
-  AMXLData,
-  DialogInfo,
-  LMCPExportableData,
-  LMCPTaskData,
-  SameDayData,
-} from "../../types/Tasks";
+import { DialogInfo, LMCPTaskData, SameDayData } from "../../types/Tasks";
 import {
   QueryableLMCPTask,
   QueryableSameDayRouteTask,
