@@ -645,12 +645,4 @@ const SameDay = (props: SameDayProps) => {
 
 export default SameDay;
 
-// FEATURE: Autocomplete station code
-// FEATURE: Easily add stations to autocomplete
 // PROPOSAL: Adjust percentage with mouse scrollwheel
-// FEATURE: Copy DPO link
-
-// TODO: Create multiple error severities: info, warn, error
-
-// TODO: Dynamic tooltips on buttons to give more info
-// TODO: Add helpertext prop to textfield to show errors

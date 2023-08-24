@@ -43,6 +43,5 @@ const Settings = (props: SettingsProps) => {
 
 export default Settings;
 
-// TODO: Display version number somewhere in here
 // PROPOSAL: In-app changelog?
 // PROPOSAL: Add options to change what is copied for the audits
