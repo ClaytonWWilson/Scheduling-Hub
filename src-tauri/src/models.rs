@@ -3,6 +3,7 @@ use diesel::prelude::*;
 use serde::Serialize;
 
 #[derive(Queryable, Selectable, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[diesel(table_name = schema::station)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct Station {
@@ -16,6 +17,7 @@ pub struct NewStation<'a> {
 }
 
 #[derive(Queryable, Selectable, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[diesel(table_name = schema::same_day_route_task)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct SameDayTask {
@@ -48,6 +50,7 @@ pub struct NewSameDayTask<'a> {
 }
 
 #[derive(Queryable, Selectable, Serialize)]
+#[serde(rename_all = "camelCase")]
 #[diesel(table_name = schema::lmcp_task)]
 #[diesel(check_for_backend(diesel::sqlite::Sqlite))]
 pub struct LMCPTask {
