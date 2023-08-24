@@ -1,7 +1,14 @@
-# Tauri + React + Typescript
+![Logo](./src-tauri/icons/128x128.png)
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+# Scheduling Hub
 
-## Recommended IDE Setup
+A Desktop app that contains many tools useful for schedulers
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## Features
+
+- Assistance for routing tasks
+- Blurb genaration
+- Error checking and correction
+- Routing stats
+- Slick UI
+- Dark Mode 😎
