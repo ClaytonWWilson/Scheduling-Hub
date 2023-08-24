@@ -27,19 +27,6 @@ type AMXLErrors = {
   adhocLink: string;
 };
 
-// type SameDayData = {
-//   startTime: string | undefined;
-//   stationCode: string | undefined;
-//   routingType: "samedaysunrise" | "samedayam" | undefined;
-//   bufferPercent: number | undefined;
-//   dpoLink: string | undefined;
-//   dpoCompleteTime: string | undefined;
-//   routeCount: number | undefined;
-//   fileTbaCount: number | undefined;
-//   routedTbaCount: number | undefined;
-//   endTime: string | undefined;
-// };
-
 const SameDayInputs = z.object({
   stationCode: z.string(),
   routingType: z.string(),
@@ -47,37 +34,52 @@ const SameDayInputs = z.object({
   dpoLink: z.string(),
   routedTbaCount: z.string(),
   routeCount: z.string(),
+  fileTbaCount: z.number().optional(),
 });
 
 type SameDayInputs = z.infer<typeof SameDayInputs>;
 
 const SameDayData = z.object({
   startTime: z.date().optional(),
-  stationCode: z.string().optional(),
-  routingType: z.union([
-    z.literal("samedaysunrise"),
-    z.literal("samedayam"),
-    z.undefined(),
-  ]),
-  bufferPercent: z.number().optional(),
-  dpoLink: z.string().optional(),
+  stationCode: z
+    .string()
+    .nonempty("Cannot be empty")
+    .regex(/^[A-Z]{3}[1-9]{1}$/, "Invalid Station Code"),
+  routingType: z.union([z.literal("samedaysunrise"), z.literal("samedayam")]),
+  bufferPercent: z
+    .number({ invalid_type_error: "Must be a number" })
+    .min(0, "Cannot be negative"),
+  dpoLink: z //TODO: Refine and check date here
+    .string()
+    .nonempty("Cannot be empty")
+    .regex(
+      /^https:\/\/na.dispatch.planning.last-mile.a2z.com\/dispatch-planning\/[A-Z]{3}[1-9]{1}\/.+/g,
+      "Invalid DPO link"
+    ),
   dpoCompleteTime: z.date().optional(),
-  routeCount: z.number().optional(),
+  routeCount: z
+    .number({ invalid_type_error: "Must be a number" })
+    .min(0, "Cannot be negative"),
   fileTbaCount: z.number().optional(),
-  routedTbaCount: z.number().optional(),
+  routedTbaCount: z
+    .number({ invalid_type_error: "Must be a number" })
+    .min(0, "Cannot be negative"),
   endTime: z.date().optional(),
 });
 
 type SameDayData = z.infer<typeof SameDayData>;
 
-type SameDayErrors = {
-  stationCode: string | undefined;
-  routingType: string | undefined;
-  bufferPercent: string | undefined;
-  dpoLink: string | undefined;
-  routeCount: string | undefined;
-  routedTbaCount: string | undefined;
-};
+const SameDayErrors = z.object({
+  stationCode: z.union([z.string(), z.undefined()]),
+  routingType: z.union([z.string(), z.undefined()]),
+  bufferPercent: z.union([z.string(), z.undefined()]),
+  dpoLink: z.union([z.string(), z.undefined()]),
+  routeCount: z.union([z.string(), z.undefined()]),
+  routedTbaCount: z.union([z.string(), z.undefined()]),
+  fileTbaCount: z.union([z.string(), z.undefined()]),
+});
+
+type SameDayErrors = z.infer<typeof SameDayErrors>;
 
 const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
 const LMCPExportableData = z.object({

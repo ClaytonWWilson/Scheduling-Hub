@@ -62,41 +62,6 @@ const Tasks = (props: TaskProps) => {
   const amxlCompletedHandler = () => {};
 
   const sameDayCompletedHandler = (taskId: number, data: SameDayData) => {
-    let errorMessage = "";
-    if (data.startTime === undefined)
-      errorMessage += "Start Time is undefined.\n";
-    if (data.stationCode === undefined)
-      errorMessage += "Station Code is undefined.\n";
-    if (data.routingType === undefined)
-      errorMessage += "Routing Type is undefined.\n";
-    if (data.bufferPercent === undefined)
-      errorMessage += "Buffer Percent is undefined.\n";
-    if (data.dpoLink === undefined) errorMessage += "DPO Link is undefined.\n";
-    if (data.dpoCompleteTime === undefined)
-      errorMessage += "DPO complete time is undefined.\n";
-    if (data.routeCount === undefined)
-      errorMessage += "Route Count is undefined.\n";
-    if (data.routedTbaCount === undefined)
-      errorMessage += "Routed TBA count is undefined.\n";
-    if (data.endTime === undefined) errorMessage += "End Time is undefined.\n";
-
-    if (errorMessage !== "") {
-      console.error(errorMessage);
-
-      const dialog: DialogInfo = {
-        title: "Error",
-        message: `An error occurred when trying to save this task: \n${errorMessage}}\nDo you want to continue closing this task without saving?`,
-        options: "YesNo",
-        error: true,
-        onConfirm: () => {
-          removeTask(taskId);
-          enqueueSnackbar("Same Day task closed", { variant: "error" });
-        },
-      };
-
-      showDialog(dialog);
-    }
-
     const dialog: DialogInfo = {
       title: "Complete task?",
       message: "Are you ready to mark this task as completed?",
@@ -132,21 +97,18 @@ const Tasks = (props: TaskProps) => {
       stationCode: data.stationCode as string,
     };
 
-    // TODO: Fix same day types and fix these hardcoded dates
     return saveStationToDatabase(insertableStation).then(() => {
       const insertableTaskData: QueryableSameDayRouteTask = {
-        stationCode: data.stationCode as string,
-        startTime: data.startTime ? data.startTime : new Date(),
+        stationCode: data.stationCode,
+        startTime: data.startTime,
         tbaSubmittedCount: data.fileTbaCount,
-        dpoCompleteTime: data.dpoCompleteTime
-          ? data.dpoCompleteTime
-          : new Date(),
-        endTime: data.endTime ? data.endTime : new Date(),
-        sameDayType: data.routingType as string,
-        bufferPercent: data.bufferPercent as number,
-        dpoLink: data.dpoLink as string,
-        tbaRoutedCount: data.routedTbaCount as number,
-        routeCount: data.routeCount as number,
+        dpoCompleteTime: data.dpoCompleteTime,
+        endTime: data.endTime,
+        sameDayType: data.routingType,
+        bufferPercent: data.bufferPercent,
+        dpoLink: data.dpoLink,
+        tbaRoutedCount: data.routedTbaCount,
+        routeCount: data.routeCount,
       };
 
       return invoke("insert_same_day_task", insertableTaskData);

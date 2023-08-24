@@ -10,12 +10,14 @@ import {
   Radio,
   RadioGroup,
   TextField,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CopyAllIcon from "@mui/icons-material/CopyAll";
 import {
   CSVDecodedRow,
+  coerceToNumber,
   csv2json,
   // dateToSQLiteDateString,
   isDpoLinkValid,
@@ -33,12 +35,35 @@ import {
 import DropArea from "../DropArea";
 import IconTypography from "../IconTypography";
 import { enqueueSnackbar } from "notistack";
+import { z } from "zod";
 
 type SameDayProps = {
   onCancel: (taskId: number) => void;
   onComplete: (taskId: number, data: SameDayData) => void;
   onShowDialog: (dialogInfo: DialogInfo) => void;
   taskId: number;
+};
+
+const TaskTimes = z.object({
+  startTime: z.date().optional(),
+  dpoCompleteTime: z.date().optional(),
+  endTime: z.date().optional(),
+});
+
+type TaskTimes = z.infer<typeof TaskTimes>;
+
+const parseSameDayInputs = (currentData: SameDayInputs) => {
+  const temp = { ...currentData };
+  // Coerce to numbers. Ensures that commas in a number string dont invalidate it.
+  // @ts-ignore
+  temp.bufferPercent = coerceToNumber(temp.bufferPercent);
+  // @ts-ignore
+  temp.routedTbaCount = coerceToNumber(temp.routedTbaCount);
+  // @ts-ignore
+  temp.routeCount = coerceToNumber(temp.routeCount);
+  // @ts-ignore
+
+  return SameDayData.safeParse(temp);
 };
 
 // Checks all inputs
@@ -64,34 +89,43 @@ const areInputErrors = (data: SameDayData, errors: SameDayErrors) => {
 };
 
 // Only check inputs required for volume check
-const areVolumeCheckErrors = (data: SameDayData, errors: SameDayErrors) => {
+const areVolumeCheckErrors = (errors: SameDayErrors) => {
   // Can't do a volume check without file volume
-  if (!data.fileTbaCount) return true;
+  // if (!data.fileTbaCount) return true;
 
-  const volumeCheckRequiredKeys = [
-    "stationCode",
-    "routingType",
-    "routedTbaCount",
-    "fileTbaCount",
-  ];
+  const val = Boolean(
+    errors.stationCode ||
+      errors.routingType ||
+      errors.routedTbaCount ||
+      errors.fileTbaCount
+  );
+  console.log(val);
+  return val;
 
-  // Check if any required input data is missing
-  for (let i = 0; i < Object.entries(data).length; i++) {
-    const [key, val] = Object.entries(data)[i];
-    if (volumeCheckRequiredKeys.indexOf(key) != -1 && val === undefined) {
-      return true;
-    }
-  }
+  // const volumeCheckRequiredKeys = [
+  //   "stationCode",
+  //   "routingType",
+  //   "routedTbaCount",
+  //   "fileTbaCount",
+  // ];
 
-  // Check if there are any errors in the required data
-  for (let i = 0; i < Object.entries(errors).length; i++) {
-    const [key, val] = Object.entries(errors)[i];
-    if (volumeCheckRequiredKeys.indexOf(key) != -1 && val !== undefined) {
-      return true;
-    }
-  }
+  // // Check if any required input data is missing
+  // for (let i = 0; i < Object.entries(data).length; i++) {
+  //   const [key, val] = Object.entries(data)[i];
+  //   if (volumeCheckRequiredKeys.indexOf(key) != -1 && val === undefined) {
+  //     return true;
+  //   }
+  // }
 
-  return false;
+  // // Check if there are any errors in the required data
+  // for (let i = 0; i < Object.entries(errors).length; i++) {
+  //   const [key, val] = Object.entries(errors)[i];
+  //   if (volumeCheckRequiredKeys.indexOf(key) != -1 && val !== undefined) {
+  //     return true;
+  //   }
+  // }
+
+  // return false;
 };
 
 const percentToTextColor = (
@@ -119,6 +153,50 @@ const percentToTextColor = (
   }
 };
 
+const getVolumeAudit = (
+  stationCode: string,
+  routingType: string,
+  fileTbaCount: number,
+  routedTbaCount: number
+) => {
+  // if (!validatedData.fileTbaCount || !validatedData.routedTbaCount) return "";
+
+  const blurb = `/md\n**${stationCode}** ${
+    routingType == "samedaysunrise" ? "SAME_DAY_SUNRISE" : "SAME_DAY_AM"
+  }: Routing completed.\nFile: **${fileTbaCount}** TBAs // Routed: **${routedTbaCount}** TBAs // Delta: **${percentChange(
+    fileTbaCount,
+    routedTbaCount
+  ).toFixed(2)}%**`;
+
+  return blurb;
+};
+
+const getDispatchAudit = (data: SameDayData) => {
+  // const totalRoutes = Math.ceil(
+  //   parseInt(userInputs.routeCount) *
+  //     (1 + parseInt(userInputs.bufferPercent) / 100)
+  // );
+  const totalRoutes = Math.ceil(
+    data.routeCount * (1 + data.bufferPercent / 100)
+  );
+  let blurb = `/md\n**${data.stationCode}** ${
+    data.routingType == "samedaysunrise" ? "SAME_DAY_SUNRISE" : "SAME_DAY_AM"
+  }: **${totalRoutes}** total flex routes (**${data.routeCount}** + **${
+    totalRoutes - data.routeCount
+  }** buffer)`;
+
+  if (data.fileTbaCount && data.routedTbaCount) {
+    blurb += `\nFile: **${data.fileTbaCount}** TBAs // Routed: **${
+      data.routedTbaCount
+    }** TBAs // Delta: **${percentChange(
+      data.fileTbaCount,
+      data.routedTbaCount
+    ).toFixed(2)}%**`;
+  }
+
+  return blurb;
+};
+
 const SameDay = (props: SameDayProps) => {
   const [userInputs, setUserInputs] = useState<SameDayInputs>({
     stationCode: "",
@@ -129,26 +207,7 @@ const SameDay = (props: SameDayProps) => {
     routedTbaCount: "",
   });
 
-  const [validatedData, setValidatedData] = useState<SameDayData>({
-    startTime: undefined,
-    stationCode: undefined,
-    routingType: undefined,
-    bufferPercent: undefined,
-    dpoLink: undefined,
-    dpoCompleteTime: undefined,
-    routeCount: undefined,
-    fileTbaCount: undefined,
-    routedTbaCount: undefined,
-    endTime: undefined,
-  });
-
-  // const [focused, setFocused] = useState({
-  //   stationCode: false,
-  //   bufferPercent: false,
-  //   dpoLink: false,
-  //   routeCount: false,
-  //   routedTbaCount: false,
-  // });
+  const [times, setTimes] = useState<TaskTimes>({});
 
   const [fileData, setFileData] = useState<CSVDecodedRow[] | undefined>(
     undefined
@@ -202,15 +261,15 @@ const SameDay = (props: SameDayProps) => {
         routingType = "samedayam";
       }
 
-      setUserInputs((prev) => {
-        return { ...prev, stationCode, routingType };
-      });
-
       const fileTbaCount = fileJson.length;
 
-      setValidatedData((currentData) => {
-        return { ...currentData, fileTbaCount };
+      setUserInputs((prev) => {
+        return { ...prev, stationCode, routingType, fileTbaCount };
       });
+
+      // setValidatedData((currentData) => {
+      //   return { ...currentData, fileTbaCount };
+      // });
 
       setFileData(fileJson);
     });
@@ -218,144 +277,52 @@ const SameDay = (props: SameDayProps) => {
     reader.readAsText(inputFile);
   };
 
-  const getVolumeAudit = () => {
-    if (!validatedData.fileTbaCount || !validatedData.routedTbaCount) return "";
-
-    const blurb = `/md\n**${userInputs.stationCode}** ${
-      userInputs.routingType == "samedaysunrise"
-        ? "SAME_DAY_SUNRISE"
-        : "SAME_DAY_AM"
-    }: Routing completed.\nFile: **${
-      validatedData.fileTbaCount
-    }** TBAs // Routed: **${
-      validatedData.routedTbaCount
-    }** TBAs // Delta: **${percentChange(
-      validatedData.fileTbaCount,
-      validatedData.routedTbaCount
-    ).toFixed(2)}%**`;
-
-    return blurb;
-  };
-
-  const getDispatchAudit = () => {
-    const totalRoutes = Math.ceil(
-      parseInt(userInputs.routeCount) *
-        (1 + parseInt(userInputs.bufferPercent) / 100)
-    );
-    let blurb = `/md\n**${userInputs.stationCode}** ${
-      userInputs.routingType == "samedaysunrise"
-        ? "SAME_DAY_SUNRISE"
-        : "SAME_DAY_AM"
-    }: **${totalRoutes}** total flex routes (**${userInputs.routeCount}** + **${
-      totalRoutes - parseInt(userInputs.routeCount)
-    }** buffer)`;
-
-    if (validatedData.fileTbaCount && validatedData.routedTbaCount) {
-      blurb += `\nFile: **${validatedData.fileTbaCount}** TBAs // Routed: **${
-        validatedData.routedTbaCount
-      }** TBAs // Delta: **${percentChange(
-        validatedData.fileTbaCount,
-        validatedData.routedTbaCount
-      ).toFixed(2)}%**`;
+  const copyAuditBlurb = () => {
+    console.log("here");
+    if (Object.keys(errors).length == 0) {
+      const res = parseSameDayInputs(userInputs);
+      if (res.success) {
+        navigator.clipboard.writeText(getDispatchAudit(res.data));
+        enqueueSnackbar("Dispatch audit copied", {
+          variant: "success",
+        });
+      }
+    } else if (
+      userInputs.fileTbaCount !== undefined &&
+      !areVolumeCheckErrors(errors)
+    ) {
+      navigator.clipboard.writeText(
+        getVolumeAudit(
+          userInputs.stationCode,
+          userInputs.routingType,
+          userInputs.fileTbaCount,
+          coerceToNumber(userInputs.routedTbaCount)
+        )
+      );
+      enqueueSnackbar("Volume audit copied", { variant: "success" });
     }
-
-    return blurb;
   };
 
   // Checks all user input and sets errors and validated data
   const validateInputData = () => {
-    const errors: SameDayErrors = {
-      stationCode: undefined,
-      routingType: undefined,
-      bufferPercent: undefined,
-      dpoLink: undefined,
-      routeCount: undefined,
-      routedTbaCount: undefined,
-    };
+    const res = parseSameDayInputs(userInputs);
+    console.log(res);
 
-    const validated: SameDayData = {
-      startTime: validatedData.startTime,
-      stationCode: undefined,
-      routingType: undefined,
-      bufferPercent: undefined,
-      dpoLink: undefined,
-      dpoCompleteTime: validatedData.dpoCompleteTime,
-      routeCount: undefined,
-      routedTbaCount: undefined,
-      fileTbaCount: validatedData.fileTbaCount,
-      endTime: validatedData.endTime,
-    };
-
-    // Validate stationCode
-    if (userInputs.stationCode === "") {
-      errors.stationCode = "Station Code cannot be empty.";
-    } else if (!isStationCodeValid(userInputs.stationCode)) {
-      errors.stationCode = "Station Code is invalid.";
+    if (res.success) {
+      setErrors({});
     } else {
-      validated.stationCode = userInputs.stationCode;
+      mapErrorsToState(res.error.errors);
     }
+  };
 
-    // Validate routingType
-    if (userInputs.routingType === "") {
-      errors.routingType = "Routing type cannot be blank.";
-    } else if (
-      userInputs.routingType !== "samedaysunrise" &&
-      userInputs.routingType !== "samedayam"
-    ) {
-      errors.routingType =
-        "Routing Type must be either Same Day Sunrise or Same Day AM.";
-    } else {
-      validated.routingType = userInputs.routingType;
-    }
+  const mapErrorsToState = (zodErrors: z.ZodIssue[]) => {
+    const sameDayErrors: SameDayErrors = {};
 
-    // Validate bufferPercent
-    if (userInputs.bufferPercent === "") {
-      errors.bufferPercent = "Buffer percentage cannot be empty.";
-    } else if (!isNumeric(userInputs.bufferPercent)) {
-      errors.bufferPercent = "Buffer percentage must be a number.";
-    } else if (parseInt(userInputs.bufferPercent) < 0) {
-      errors.bufferPercent = "Buffer percentage must be a positive number.";
-    } else {
-      validated.bufferPercent = parseInt(userInputs.bufferPercent);
-    }
-    if (errors.bufferPercent) {
-      validated.dpoCompleteTime = undefined;
-    }
-
-    // Validate dpoLink
-    if (!isDpoLinkValid(userInputs.dpoLink, userInputs.stationCode)) {
-      errors.dpoLink = "DPO Link is invalid.";
-    } else {
-      validated.dpoLink = userInputs.dpoLink;
-      validated.dpoCompleteTime = new Date();
-    }
-
-    // Validate routedTbaCount
-    if (userInputs.routedTbaCount === "") {
-      errors.routedTbaCount = "TBAs routed cannot be empty.";
-    } else if (!isNumeric(userInputs.routedTbaCount)) {
-      errors.routedTbaCount = "TBAs routed must be a number.";
-    } else if (parseInt(userInputs.routedTbaCount) < 0) {
-      errors.routedTbaCount = "TBAs routed cannot be negative.";
-    } else {
-      validated.routedTbaCount = parseInt(userInputs.routedTbaCount);
-    }
-
-    // generated routes
-    if (userInputs.routeCount === "") {
-      errors.routeCount = "Number of routes cannot be empty.";
-    } else if (!isNumeric(userInputs.routeCount)) {
-      errors.routeCount = "Number of routes must be a number.";
-    } else if (parseInt(userInputs.routeCount) < 0) {
-      errors.routeCount = "Number of routes cannot be negative.";
-    } else {
-      validated.routeCount = parseInt(userInputs.routeCount);
-    }
-
-    setErrors(errors);
-    setValidatedData((prev) => {
-      return { ...prev, ...validated };
+    zodErrors.forEach((zodError) => {
+      sameDayErrors[zodError.path[0] as keyof SameDayErrors] = zodError.message;
     });
+
+    setErrors(sameDayErrors);
   };
 
   const copyTbasToClipboard = () => {
@@ -374,7 +341,7 @@ const SameDay = (props: SameDayProps) => {
 
   // Runs once when the component is mounted
   useEffect(() => {
-    setValidatedData((prev) => {
+    setTimes((prev) => {
       return { ...prev, startTime: new Date() };
     });
   }, []);
@@ -408,26 +375,31 @@ const SameDay = (props: SameDayProps) => {
               enqueueSnackbar("TBAs copied", { variant: "success" });
             }}
           >{`File TBAs: ${
-            validatedData.fileTbaCount ? validatedData.fileTbaCount : "???"
+            userInputs.fileTbaCount ? userInputs.fileTbaCount : "???"
           }`}</IconTypography>
         </div>
-        <TextField
-          label="Station Code"
-          value={userInputs.stationCode}
-          onChange={(e) => {
-            let code = e.target.value.toUpperCase();
+        <Tooltip
+          title={userInputs.stationCode !== "" ? errors.stationCode : ""}
+          followCursor
+        >
+          <TextField
+            label="Station Code"
+            value={userInputs.stationCode}
+            onChange={(e) => {
+              let code = e.target.value.toUpperCase();
 
-            setUserInputs((prev) => {
-              return { ...prev, stationCode: code };
-            });
-          }}
-          error={
-            userInputs.stationCode !== "" && errors.stationCode !== undefined
-          }
-          autoComplete="aaaaa"
-          aria-autocomplete="none"
-          className="w-96"
-        />
+              setUserInputs((prev) => {
+                return { ...prev, stationCode: code };
+              });
+            }}
+            error={
+              userInputs.stationCode !== "" && errors.stationCode !== undefined
+            }
+            autoComplete="aaaaa"
+            aria-autocomplete="none"
+            className="w-96"
+          />
+        </Tooltip>
 
         {/* <Autocomplete
           disablePortal
@@ -460,78 +432,107 @@ const SameDay = (props: SameDayProps) => {
           />
         </RadioGroup>
 
-        <TextField
-          label="Buffer Percentage"
-          value={userInputs.bufferPercent}
-          onChange={(e) => {
-            const percent = e.target.value.replaceAll(",", "");
+        <Tooltip
+          title={userInputs.bufferPercent !== "" ? errors.bufferPercent : ""}
+          followCursor
+        >
+          <TextField
+            label="Buffer Percentage"
+            value={userInputs.bufferPercent}
+            onChange={(e) => {
+              const percent = e.target.value.replaceAll(",", "");
 
-            setUserInputs((prev) => {
-              return { ...prev, bufferPercent: percent };
-            });
-          }}
-          error={
-            userInputs.bufferPercent !== "" &&
-            errors.bufferPercent !== undefined
-          }
-          autoComplete="aaaaa"
-          aria-autocomplete="none"
-          className="w-96"
-          InputProps={{
-            endAdornment: <InputAdornment position="end">%</InputAdornment>,
-          }}
-        />
-        <TextField
-          label="DPO Link"
-          value={userInputs.dpoLink}
-          onChange={(e) => {
-            let link = e.target.value;
+              setUserInputs((prev) => {
+                return { ...prev, bufferPercent: percent };
+              });
+            }}
+            error={
+              userInputs.bufferPercent !== "" &&
+              errors.bufferPercent !== undefined
+            }
+            autoComplete="aaaaa"
+            aria-autocomplete="none"
+            className="w-96"
+            InputProps={{
+              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+            }}
+          />
+        </Tooltip>
 
-            setUserInputs((prev) => {
-              return { ...prev, dpoLink: link };
-            });
-          }}
-          error={userInputs.dpoLink !== "" && errors.dpoLink !== undefined}
-          autoComplete="aaaaa"
-          aria-autocomplete="none"
-          className="w-96"
-        />
+        <Tooltip
+          title={userInputs.dpoLink !== "" ? errors.dpoLink : ""}
+          followCursor
+        >
+          <TextField
+            label="DPO Link"
+            value={userInputs.dpoLink}
+            onChange={(e) => {
+              let link = e.target.value;
+
+              setUserInputs((prev) => {
+                return { ...prev, dpoLink: link };
+              });
+
+              setTimes((prev) => {
+                return { ...prev, dpoCompleteTime: new Date() };
+              });
+            }}
+            error={userInputs.dpoLink !== "" && errors.dpoLink !== undefined}
+            autoComplete="aaaaa"
+            aria-autocomplete="none"
+            className="w-96"
+          />
+        </Tooltip>
+
         <div className="flex flex-row gap-x-2">
-          <TextField
-            label="TBAs routed"
-            value={userInputs.routedTbaCount}
-            onChange={(e) => {
-              let numOfTBAs = e.target.value.replaceAll(",", "");
-
-              setUserInputs((prev) => {
-                return { ...prev, routedTbaCount: numOfTBAs };
-              });
-            }}
-            error={
-              userInputs.routedTbaCount !== "" &&
-              errors.routedTbaCount !== undefined
+          <Tooltip
+            title={
+              userInputs.routedTbaCount !== "" ? errors.routedTbaCount : ""
             }
-            autoComplete="aaaaa"
-            aria-autocomplete="none"
-            className="w-full"
-          />
-          <TextField
-            label="# of generated routes"
-            value={userInputs.routeCount}
-            onChange={(e) => {
-              let NumOfRoutes = e.target.value.replaceAll(",", "");
+            followCursor
+          >
+            <TextField
+              label="TBAs routed"
+              value={userInputs.routedTbaCount}
+              onChange={(e) => {
+                let numOfTBAs = e.target.value.replaceAll(",", "");
 
-              setUserInputs((prev) => {
-                return { ...prev, routeCount: NumOfRoutes };
-              });
-            }}
-            error={
-              userInputs.routeCount !== "" && errors.routeCount !== undefined
-            }
-            autoComplete="aaaaa"
-            aria-autocomplete="none"
-            className="w-full"
-          />
+                setUserInputs((prev) => {
+                  return { ...prev, routedTbaCount: numOfTBAs };
+                });
+              }}
+              error={
+                userInputs.routedTbaCount !== "" &&
+                errors.routedTbaCount !== undefined
+              }
+              autoComplete="aaaaa"
+              aria-autocomplete="none"
+              className="w-full"
+            />
+          </Tooltip>
+
+          <Tooltip
+            title={userInputs.routeCount !== "" ? errors.routeCount : ""}
+            followCursor
+          >
+            <TextField
+              label="# of generated routes"
+              value={userInputs.routeCount}
+              onChange={(e) => {
+                let NumOfRoutes = e.target.value.replaceAll(",", "");
+
+                setUserInputs((prev) => {
+                  return { ...prev, routeCount: NumOfRoutes };
+                });
+              }}
+              error={
+                userInputs.routeCount !== "" && errors.routeCount !== undefined
+              }
+              autoComplete="aaaaa"
+              aria-autocomplete="none"
+              className="w-full"
+            />
+          </Tooltip>
         </div>
         <div className="flex flex-row gap-x-2">
           <Typography className="pl-2">
@@ -548,11 +549,11 @@ const SameDay = (props: SameDayProps) => {
           <div className="ml-auto">
             <Typography
               className={`pr-2 ml-auto ${
-                validatedData.fileTbaCount && validatedData.routedTbaCount
+                userInputs.fileTbaCount && userInputs.routedTbaCount
                   ? percentToTextColor(
                       percentChange(
-                        validatedData.fileTbaCount,
-                        validatedData.routedTbaCount
+                        userInputs.fileTbaCount,
+                        coerceToNumber(userInputs.routedTbaCount)
                       ),
                       "low",
                       5,
@@ -561,10 +562,10 @@ const SameDay = (props: SameDayProps) => {
                   : ""
               }`}
             >{`Delta: ${
-              validatedData.fileTbaCount && validatedData.routedTbaCount
+              userInputs.fileTbaCount && userInputs.routedTbaCount
                 ? percentChange(
-                    validatedData.fileTbaCount,
-                    validatedData.routedTbaCount
+                    userInputs.fileTbaCount,
+                    coerceToNumber(userInputs.routedTbaCount)
                   ).toFixed(2) + "%"
                 : "???"
             }`}</Typography>
@@ -575,22 +576,12 @@ const SameDay = (props: SameDayProps) => {
           <Button
             variant="outlined"
             onClick={() => {
-              if (
-                !areVolumeCheckErrors(validatedData, errors) &&
-                areInputErrors(validatedData, errors)
-              ) {
-                navigator.clipboard.writeText(getVolumeAudit());
-                enqueueSnackbar("Volume audit copied", { variant: "success" });
-              } else if (!areInputErrors(validatedData, errors)) {
-                navigator.clipboard.writeText(getDispatchAudit());
-                enqueueSnackbar("Dispatch audit copied", {
-                  variant: "success",
-                });
-              }
+              copyAuditBlurb();
             }}
             disabled={
-              areVolumeCheckErrors(validatedData, errors) &&
-              areInputErrors(validatedData, errors)
+              (areVolumeCheckErrors(errors) ||
+                userInputs.fileTbaCount === undefined) &&
+              Object.keys(errors).length != 0
             }
           >
             Audit
@@ -620,7 +611,7 @@ const SameDay = (props: SameDayProps) => {
                 variant: "success",
               });
             }}
-            disabled={areInputErrors(validatedData, errors)}
+            disabled={Object.keys(errors).length > 0}
           >
             Station
           </Button>
@@ -629,15 +620,19 @@ const SameDay = (props: SameDayProps) => {
               variant="contained"
               onClick={() => {
                 const completeTime = new Date();
-                setValidatedData((prev) => {
+                setTimes((prev) => {
                   return { ...prev, endTime: completeTime };
                 });
-                props.onComplete(props.taskId, {
-                  ...validatedData,
-                  endTime: completeTime,
-                });
+                const res = parseSameDayInputs(userInputs);
+                if (res.success) {
+                  props.onComplete(props.taskId, {
+                    ...res.data,
+                    ...times,
+                    endTime: completeTime,
+                  });
+                }
               }}
-              disabled={areInputErrors(validatedData, errors)}
+              disabled={Object.keys(errors).length > 0}
             >
               Complete Task
             </Button>

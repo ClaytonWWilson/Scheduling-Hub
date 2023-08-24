@@ -22,15 +22,15 @@ type QueryableStation = {
 const QueryableSameDayRouteTask = z.object({
   id: z.number().positive().optional(),
   stationCode: z.string(),
-  startTime: z.union([z.date(), z.string().datetime()]),
+  startTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
   tbaSubmittedCount: z.number().optional(),
-  dpoCompleteTime: z.union([z.date(), z.string().datetime()]),
+  dpoCompleteTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
   sameDayType: z.string(),
   bufferPercent: z.number(),
   dpoLink: z.string(),
   tbaRoutedCount: z.number(),
   routeCount: z.number(),
-  endTime: z.union([z.date(), z.string().datetime()]),
+  endTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
 });
 
 type QueryableSameDayRouteTask = z.infer<typeof QueryableSameDayRouteTask>;
