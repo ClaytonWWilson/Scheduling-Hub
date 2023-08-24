@@ -18,6 +18,7 @@ import {
   coerceToNumber,
   csv2json,
   isNumeric,
+  noAutocomplete,
   objectHasData,
   percentChange,
 } from "../../Utilities";
@@ -325,7 +326,7 @@ const SameDay = (props: SameDayProps) => {
             error={
               userInputs.stationCode !== "" && errors.stationCode !== undefined
             }
-            autoComplete="aaaaa"
+            autoComplete={noAutocomplete}
             aria-autocomplete="none"
             className="w-96"
           />
@@ -371,7 +372,7 @@ const SameDay = (props: SameDayProps) => {
               userInputs.bufferPercent !== "" &&
               errors.bufferPercent !== undefined
             }
-            autoComplete="aaaaa"
+            autoComplete={noAutocomplete}
             aria-autocomplete="none"
             className="w-96"
             InputProps={{
@@ -399,7 +400,7 @@ const SameDay = (props: SameDayProps) => {
               });
             }}
             error={userInputs.dpoLink !== "" && errors.dpoLink !== undefined}
-            autoComplete="aaaaa"
+            autoComplete={noAutocomplete}
             aria-autocomplete="none"
             className="w-96"
           />
@@ -426,7 +427,7 @@ const SameDay = (props: SameDayProps) => {
                 userInputs.routedTbaCount !== "" &&
                 errors.routedTbaCount !== undefined
               }
-              autoComplete="aaaaa"
+              autoComplete={noAutocomplete}
               aria-autocomplete="none"
               className="w-full"
             />
@@ -449,7 +450,7 @@ const SameDay = (props: SameDayProps) => {
               error={
                 userInputs.routeCount !== "" && errors.routeCount !== undefined
               }
-              autoComplete="aaaaa"
+              autoComplete={noAutocomplete}
               aria-autocomplete="none"
               className="w-full"
             />
