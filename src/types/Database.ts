@@ -5,8 +5,7 @@ type QueryableStation = {
   stationCode: string;
 };
 
-const QueryableSameDayRouteTask = z.object({
-  id: z.number().positive().optional(),
+const InsertableSameDayRouteTask = z.object({
   stationCode: z.string(),
   startTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
   tbaSubmittedCount: z.number().optional(),
@@ -19,7 +18,23 @@ const QueryableSameDayRouteTask = z.object({
   endTime: z.union([z.date(), z.string().datetime(), z.undefined()]),
 });
 
-type QueryableSameDayRouteTask = z.infer<typeof QueryableSameDayRouteTask>;
+type InsertableSameDayRouteTask = z.infer<typeof InsertableSameDayRouteTask>;
+
+const SelectableSameDayRouteTask = z.object({
+  id: z.number().positive(),
+  stationCode: z.string(),
+  startTime: z.union([z.string().datetime(), z.null()]),
+  tbaSubmittedCount: z.number().optional(),
+  dpoCompleteTime: z.union([z.string().datetime(), z.null()]),
+  sameDayType: z.string(),
+  bufferPercent: z.number(),
+  dpoLink: z.string(),
+  tbaRoutedCount: z.number(),
+  routeCount: z.number(),
+  endTime: z.union([z.string().datetime(), z.null()]),
+});
+
+type SelectableSameDayRouteTask = z.infer<typeof SelectableSameDayRouteTask>;
 
 const QueryableLMCPTask = LMCPTaskData.merge(
   z.object({
@@ -29,6 +44,10 @@ const QueryableLMCPTask = LMCPTaskData.merge(
 
 type QueryableLMCPTask = z.infer<typeof QueryableLMCPTask>;
 
-export type { QueryableStation, QueryableSameDayRouteTask };
+export type {
+  QueryableStation,
+  InsertableSameDayRouteTask,
+  SelectableSameDayRouteTask,
+};
 
 export { QueryableLMCPTask };

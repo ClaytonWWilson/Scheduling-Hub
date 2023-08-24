@@ -22,7 +22,7 @@ import ThunderstormIcon from "@mui/icons-material/Thunderstorm";
 import { DialogInfo, LMCPTaskData, SameDayData } from "../../types/Tasks";
 import {
   QueryableLMCPTask,
-  QueryableSameDayRouteTask,
+  InsertableSameDayRouteTask,
   QueryableStation,
 } from "../../types/Database";
 import LMCP from "../tasks/LMCP";
@@ -92,7 +92,7 @@ const Tasks = (props: TaskProps) => {
     };
 
     return saveStationToDatabase(insertableStation).then(() => {
-      const insertableTaskData: QueryableSameDayRouteTask = {
+      const insertableTaskData: InsertableSameDayRouteTask = {
         stationCode: data.stationCode,
         startTime: data.startTime,
         tbaSubmittedCount: data.fileTbaCount,
