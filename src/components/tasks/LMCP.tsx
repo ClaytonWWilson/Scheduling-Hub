@@ -160,9 +160,11 @@ const LMCP = (props: LMCPProps) => {
             ? row['"PackageType (string)"']
             : "",
           ofdDate: row['"OFDDate (string)"']
-            ? new Date(row['"OFDDate (string)"'])
+            ? getTimezoneAdjustedDate(new Date(row['"OFDDate (string)"']))
             : "",
-          ead: row['"EAD (string)"'] ? new Date(row['"EAD (string)"']) : "",
+          ead: row['"EAD (string)"']
+            ? getTimezoneAdjustedDate(new Date(row['"EAD (string)"']))
+            : "",
           cluster: row['"Cluster (string)"'] ? row['"Cluster (string)"'] : "",
           fulfillmentNetworkType: row['"FulfillmentNetworkType (string)"']
             ? row['"FulfillmentNetworkType (string)"']
