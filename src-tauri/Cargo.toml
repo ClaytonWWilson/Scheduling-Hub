@@ -1,6 +1,6 @@
 [package]
 name = "scheduling-hub"
-version = "0.0.3"
+version = "0.0.4"
 description = "A tool for Schedulers"
 authors = ["Clayton Wilson"]
 license = "MIT"

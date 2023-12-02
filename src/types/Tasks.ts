@@ -141,12 +141,7 @@ const LMCPTaskData = LMCPExportableData.merge(
     pdr: z.coerce
       .number({ invalid_type_error: "Must be a number" })
       .min(0, "Cannot be negative"),
-    simLink: z
-      .string()
-      .regex(
-        /^https:\/\/(sim|issues)\.amazon\.com\/issues\/[A-Z]{1}[0-9]+$/g,
-        "Invalid SIM link"
-      ),
+    simLink: z.string(),
     startTime: z.string().datetime().optional(),
     exportTime: z.string().datetime().optional(),
     endTime: z.string().datetime().optional(),
